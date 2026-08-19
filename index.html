@@ -37,7 +37,7 @@ body{
   -webkit-font-smoothing:antialiased;
   padding:0 0 96px;
 }
-.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
 
 /* ── Cabeçalho / navegação de mês ──────────────────────────────────── */
 header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border-soft)}
@@ -47,7 +47,7 @@ header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px s
 .monthnav{display:flex;align-items:center;gap:4px}
 .monthnav button.arrow{
   width:36px;height:36px;display:grid;place-items:center;border-radius:10px;
-  background:var(--card);border:1px solid var(--border);color:var(--txt-2);cursor:pointer;
+  background:var(--card);border:1px solid var(--border);color:var(--txt-2);cursor:pointer;flex:none;
 }
 .monthnav button.arrow:hover{color:var(--txt);border-color:var(--txt-3)}
 #mesLabel{
@@ -71,8 +71,8 @@ header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px s
   padding:16px;margin:16px 0;box-shadow:var(--shadow);
 }
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.stat .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-3);font-weight:600}
 .stat{min-width:0}
+.stat .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-3);font-weight:600}
 .stat .val{font-size:clamp(14px,4vw,19px);font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
 .stat.pago .val{color:var(--ok)}
 .stat.falta .val{color:var(--warn)}
@@ -80,24 +80,19 @@ header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px s
 .bar > i{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width .25s ease}
 .barinfo{display:flex;justify-content:space-between;font-size:12px;color:var(--txt-3);margin-top:6px}
 
-/* ── Formulário ────────────────────────────────────────────────────── */
-form.add{
-  background:var(--card);border:1px solid var(--border);border-radius:14px;
-  padding:10px;display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align-items:center;
-  margin-bottom:14px;
-}
-@media (max-width:560px){
-  form.add{grid-template-columns:1fr 1fr;}
-  form.add .f-nome{grid-column:1 / -1}
-  form.add .f-add{grid-column:1 / -1}
-}
-input[type=text],input[type=number]{
+/* ── Campos ────────────────────────────────────────────────────────── */
+input[type=text],input[type=number],select{
   width:100%;padding:10px 12px;border-radius:10px;background:var(--card-2);
   border:1px solid var(--border);color:var(--txt);font:inherit;font-size:14px;outline:none;
 }
+select{
+  cursor:pointer;appearance:none;padding-right:30px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23848491' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:right 9px center;
+}
 input::placeholder{color:var(--txt-3)}
-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,255,0,.12)}
-@media (prefers-color-scheme: light){ input:focus{box-shadow:0 0 0 3px rgba(30,30,36,.10)} }
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,255,0,.12)}
+@media (prefers-color-scheme: light){ input:focus,select:focus{box-shadow:0 0 0 3px rgba(30,30,36,.10)} }
 button{font:inherit}
 .btn{
   padding:10px 16px;border-radius:10px;border:1px solid transparent;
@@ -107,8 +102,29 @@ button{font:inherit}
 .btn:hover{filter:brightness(1.06)}
 .btn.ghost{background:transparent;border-color:var(--border);color:var(--txt-2);font-weight:600}
 .btn.ghost:hover{color:var(--txt);border-color:var(--txt-3)}
-.fixa-toggle{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--txt-2);cursor:pointer;user-select:none;padding-left:2px}
-.fixa-toggle input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+
+/* ── Formulário (2 linhas: dados / detalhes) ───────────────────────── */
+form.add, li.item.editando{
+  display:grid;grid-template-columns:1fr 118px 76px auto;gap:8px;align-items:center;
+}
+form.add{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:10px;margin-bottom:14px;
+}
+.g-nome  {grid-column:1;grid-row:1}
+.g-valor {grid-column:2;grid-row:1}
+.g-dia   {grid-column:3;grid-row:1}
+.g-btn   {grid-column:4;grid-row:1 / span 2;display:flex;align-items:stretch}
+.g-btn .btn{height:100%}
+.g-desc  {grid-column:1;grid-row:2}
+.g-rep   {grid-column:2 / 4;grid-row:2}
+@media (max-width:600px){
+  form.add, li.item.editando{grid-template-columns:1fr 1fr}
+  .g-nome,.g-desc,.g-rep,.g-btn{grid-column:1 / -1;grid-row:auto}
+  .g-valor,.g-dia{grid-column:auto;grid-row:auto}
+  .g-btn{display:flex;gap:8px}
+  .g-btn .btn{flex:1;height:auto;padding:11px 16px}
+}
 
 /* ── Lista ─────────────────────────────────────────────────────────── */
 ul.lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
@@ -123,13 +139,15 @@ li.item.vencida{border-color:color-mix(in srgb, var(--danger) 45%, var(--border)
   border:1.5px solid var(--txt-3);background:transparent;display:grid;place-items:center;padding:0;
 }
 .check:hover{border-color:var(--ok)}
-.check svg{opacity:0;stroke:var(--accent-ink);width:14px;height:14px}
+.check svg{opacity:0;width:14px;height:14px}
 li.paga .check{background:var(--ok);border-color:var(--ok)}
 li.paga .check svg{opacity:1;stroke:#0b2c16}
 .info{flex:1;min-width:0}
 .nome{font-weight:600;letter-spacing:-.01em;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 li.paga .nome{text-decoration:line-through;text-decoration-color:var(--txt-3)}
-.meta{font-size:12px;color:var(--txt-3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:1px}
+.desc{font-size:12.5px;color:var(--txt-2);line-height:1.35;margin-top:1px;overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{font-size:12px;color:var(--txt-3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px}
 .tag{background:var(--card-2);border:1px solid var(--border-soft);padding:0 6px;border-radius:6px;font-size:11px;font-weight:600}
 .meta .atrasada{color:var(--danger);font-weight:600}
 .valor{font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;white-space:nowrap;font-size:clamp(14px,3.8vw,15px)}
@@ -140,24 +158,13 @@ li.paga .nome{text-decoration:line-through;text-decoration-color:var(--txt-3)}
 }
 .icon:hover{background:var(--card-2);color:var(--txt)}
 .icon.del:hover{color:var(--danger)}
-
-/* linha em edição */
-li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align-items:center}
-@media (max-width:560px){
-  li.editando{grid-template-columns:1fr 1fr}
-  li.editando .f-nome{grid-column:1 / -1}
-  li.editando .f-acoes{grid-column:1 / -1;display:flex;gap:8px}
-}
 .vazio{text-align:center;padding:44px 20px;color:var(--txt-3);border:1px dashed var(--border);border-radius:14px}
 .vazio b{display:block;color:var(--txt-2);font-size:15px;margin-bottom:4px}
 
 /* ── Rodapé de ações ───────────────────────────────────────────────── */
 .rodape{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-soft)}
 .rodape .btn{padding:8px 12px;font-size:13px}
-.aviso{
-  margin-top:14px;font-size:12px;color:var(--txt-3);text-align:center;line-height:1.6;
-}
-/* toast */
+.aviso{margin-top:14px;font-size:12px;color:var(--txt-3);text-align:center;line-height:1.6}
 #toast{
   position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(12px);
   background:var(--card);border:1px solid var(--border);color:var(--txt);
@@ -197,13 +204,12 @@ li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align
   </section>
 
   <form class="add" id="formAdd" autocomplete="off">
-    <div class="f-nome"><input type="text" id="fNome" placeholder="Nome da conta (ex: Aluguel)" required /></div>
-    <input type="text" id="fValor" inputmode="decimal" placeholder="R$ 0,00" />
-    <input type="number" id="fDia" min="1" max="31" placeholder="Dia" />
-    <div class="f-add" style="display:flex;gap:10px;align-items:center;justify-content:space-between">
-      <label class="fixa-toggle"><input type="checkbox" id="fFixa" /> Todo mês</label>
-      <button class="btn" type="submit">Adicionar</button>
-    </div>
+    <div class="g-nome"><input type="text" id="fNome" placeholder="Nome da conta (ex: Aluguel)" required /></div>
+    <div class="g-valor"><input type="text" id="fValor" inputmode="decimal" placeholder="R$ 0,00" /></div>
+    <div class="g-dia"><input type="number" id="fDia" min="1" max="31" placeholder="Dia" /></div>
+    <div class="g-desc"><input type="text" id="fDesc" placeholder="Descrição (opcional)" /></div>
+    <div class="g-rep"><select id="fRepete" aria-label="Repetição"></select></div>
+    <div class="g-btn"><button class="btn" type="submit">Adicionar</button></div>
   </form>
 
   <ul class="lista" id="lista"></ul>
@@ -226,15 +232,20 @@ li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align
   const KEY = "financas.v1";
   const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   const BRL = new Intl.NumberFormat("pt-BR", { style:"currency", currency:"BRL" });
+  const MAX_PARCELAS = 36;
 
   // ── Helpers de id e de mês (declarações hoisted: usadas já no estado) ─
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function chaveMes(d){ return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
   function rotuloMes(k){ const [a, m] = k.split("-"); return MESES[+m - 1] + " " + a; }
+  function deslocaMes(k, delta){
+    const [a, m] = k.split("-").map(Number);
+    return chaveMes(new Date(a, m - 1 + delta, 1));
+  }
 
   // ── Estado ──────────────────────────────────────────────────────────
-  // db = { fixas:[{id,nome,valor,dia}], meses:{ "2026-08": {semeado:true, itens:[...]} } }
-  // item = { id, nome, valor, dia, pago, fixaId|null }
+  // db = { fixas:[{id,nome,desc,valor,dia}], meses:{ "2026-08": {itens:[...]} } }
+  // item = { id, nome, desc, valor, dia, pago, fixaId|null, serie:{id,n,total}|null }
   let db = carregar();
   let mesAtual = chaveMes(new Date());
   let editando = null;
@@ -249,22 +260,18 @@ li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align
   }
   function salvar(){ localStorage.setItem(KEY, JSON.stringify(db)); }
 
-  function deslocaMes(k, delta){
-    const [a, m] = k.split("-").map(Number);
-    const d = new Date(a, m - 1 + delta, 1);
-    return chaveMes(d);
-  }
-
   // Cria o mês na primeira visita, já semeado com as contas fixas.
   function mes(k){
     if (!db.meses[k]) {
       db.meses[k] = {
-        semeado: true,
-        itens: db.fixas.map(f => ({ id: uid(), nome: f.nome, valor: f.valor, dia: f.dia, pago: false, fixaId: f.id }))
+        itens: db.fixas.map(f => novoItem(f.nome, f.desc, f.valor, f.dia, f.id, null))
       };
       salvar();
     }
     return db.meses[k];
+  }
+  function novoItem(nome, desc, valor, dia, fixaId, serie){
+    return { id: uid(), nome, desc: desc || "", valor, dia, pago: false, fixaId: fixaId || null, serie: serie || null };
   }
 
   // ── Parsing / formatação de valores ─────────────────────────────────
@@ -288,6 +295,15 @@ li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align
     if (k > hojeK) return false;
     return item.dia ? item.dia < diaHoje : false;
   }
+
+  // ── Seletor de repetição ────────────────────────────────────────────
+  // valor "1" = só este mês · "fixa" = todo mês · "N" = N meses (parcelado)
+  const selRep = document.querySelector("#fRepete");
+  (function montaOpcoes(){
+    const opts = ['<option value="1">Só este mês</option>', '<option value="fixa">Todo mês (sempre)</option>'];
+    for (let n = 2; n <= MAX_PARCELAS; n++) opts.push('<option value="' + n + '">' + n + " meses (" + n + "x)</option>");
+    selRep.innerHTML = opts.join("");
+  })();
 
   // ── Render ──────────────────────────────────────────────────────────
   const $ = (s) => document.querySelector(s);
@@ -324,21 +340,27 @@ li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align
     li.dataset.id = it.id;
 
     const meta = [];
-    if (it.dia) meta.push('<span>vence dia ' + it.dia + "</span>");
-    if (it.fixaId) meta.push('<span class="tag">fixa</span>');
+    if (it.dia) meta.push("<span>vence dia " + it.dia + "</span>");
+    if (ehFixa(it)) meta.push('<span class="tag">fixa</span>');
+    if (it.serie) meta.push('<span class="tag">' + it.serie.n + "/" + it.serie.total + "</span>");
     if (estaVencida(it, mesAtual)) meta.push('<span class="atrasada">atrasada</span>');
 
     li.innerHTML =
       '<button class="check" data-act="toggle" aria-label="Marcar como paga" aria-pressed="' + !!it.pago + '">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' +
       "</button>" +
-      '<div class="info"><span class="nome"></span>' + (meta.length ? '<span class="meta">' + meta.join("") + "</span>" : "") + "</div>" +
+      '<div class="info">' +
+        '<span class="nome"></span>' +
+        (it.desc ? '<span class="desc"></span>' : "") +
+        (meta.length ? '<span class="meta">' + meta.join("") + "</span>" : "") +
+      "</div>" +
       '<span class="valor">' + fmt(it.valor) + "</span>" +
       '<div class="acoes">' +
         '<button class="icon" data-act="editar" title="Editar" aria-label="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>' +
         '<button class="icon del" data-act="excluir" title="Excluir" aria-label="Excluir"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>' +
       "</div>";
     li.querySelector(".nome").textContent = it.nome;
+    if (it.desc) { const d = li.querySelector(".desc"); d.textContent = it.desc; d.title = it.desc; }
     return li;
   }
 
@@ -347,18 +369,26 @@ li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align
     li.className = "item editando";
     li.dataset.id = it.id;
     li.innerHTML =
-      '<div class="f-nome"><input type="text" class="e-nome" /></div>' +
-      '<input type="text" class="e-valor" inputmode="decimal" />' +
-      '<input type="number" class="e-dia" min="1" max="31" placeholder="Dia" />' +
-      '<div class="f-acoes" style="display:flex;gap:6px">' +
+      '<div class="g-nome"><input type="text" class="e-nome" placeholder="Nome da conta" /></div>' +
+      '<div class="g-valor"><input type="text" class="e-valor" inputmode="decimal" placeholder="R$ 0,00" /></div>' +
+      '<div class="g-dia"><input type="number" class="e-dia" min="1" max="31" placeholder="Dia" /></div>' +
+      '<div class="g-desc"><input type="text" class="e-desc" placeholder="Descrição (opcional)" /></div>' +
+      '<div class="g-rep" style="font-size:12px;color:var(--txt-3);align-self:center">' + textoEscopoEdicao(it) + "</div>" +
+      '<div class="g-btn" style="gap:6px">' +
         '<button class="btn" data-act="salvar">Salvar</button>' +
         '<button class="btn ghost" data-act="cancelar">Cancelar</button>' +
       "</div>";
-    li.querySelector(".e-nome").value = it.nome;
+    li.querySelector(".e-nome").value  = it.nome;
     li.querySelector(".e-valor").value = it.valor ? it.valor.toFixed(2).replace(".", ",") : "";
-    li.querySelector(".e-dia").value = it.dia || "";
+    li.querySelector(".e-dia").value   = it.dia || "";
+    li.querySelector(".e-desc").value  = it.desc || "";
     setTimeout(() => li.querySelector(".e-nome").focus(), 0);
     return li;
+  }
+  function textoEscopoEdicao(it){
+    if (ehFixa(it)) return "Conta fixa: vale também para os próximos meses.";
+    if (it.serie)  return "Parcela " + it.serie.n + "/" + it.serie.total + ": vale também para as parcelas seguintes.";
+    return "";
   }
 
   function toast(msg){
@@ -366,7 +396,15 @@ li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align
     t.textContent = msg;
     t.classList.add("on");
     clearTimeout(toast._t);
-    toast._t = setTimeout(() => t.classList.remove("on"), 2200);
+    toast._t = setTimeout(() => t.classList.remove("on"), 2400);
+  }
+
+  // Uma conta só conta como fixa enquanto o modelo dela existir.
+  function ehFixa(it){ return !!it.fixaId && db.fixas.some(f => f.id === it.fixaId); }
+
+  // Percorre os meses já existentes que vêm DEPOIS do mês atual.
+  function mesesFuturos(){
+    return Object.keys(db.meses).filter(k => k > mesAtual);
   }
 
   // ── Ações da lista ──────────────────────────────────────────────────
@@ -390,24 +428,50 @@ li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align
         const nome = li.querySelector(".e-nome").value.trim();
         if (!nome) { li.querySelector(".e-nome").focus(); return; }
         it.nome  = nome;
+        it.desc  = li.querySelector(".e-desc").value.trim();
         it.valor = parseValor(li.querySelector(".e-valor").value);
         it.dia   = parseInt(li.querySelector(".e-dia").value, 10) || null;
-        // Se é uma conta fixa, o modelo acompanha a edição (vale para os próximos meses).
+
+        // Conta fixa: atualiza o modelo e os meses futuros já criados.
         if (it.fixaId) {
           const f = db.fixas.find(x => x.id === it.fixaId);
-          if (f) { f.nome = it.nome; f.valor = it.valor; f.dia = it.dia; }
+          if (f) { f.nome = it.nome; f.desc = it.desc; f.valor = it.valor; f.dia = it.dia; }
+          for (const k of mesesFuturos())
+            for (const outro of db.meses[k].itens)
+              if (outro.fixaId === it.fixaId)
+                Object.assign(outro, { nome: it.nome, desc: it.desc, valor: it.valor, dia: it.dia });
+        }
+        // Parcelamento: atualiza as parcelas seguintes (as passadas ficam como estão).
+        if (it.serie) {
+          for (const k of mesesFuturos())
+            for (const outro of db.meses[k].itens)
+              if (outro.serie && outro.serie.id === it.serie.id)
+                Object.assign(outro, { nome: it.nome, desc: it.desc, valor: it.valor, dia: it.dia });
         }
         editando = null; salvar(); render(); break;
       }
       case "excluir": {
-        const fixa = it.fixaId && db.fixas.some(f => f.id === it.fixaId);
-        if (fixa) {
+        if (ehFixa(it)) {
           const tudo = confirm(
             '"' + it.nome + '" é uma conta fixa.\n\n' +
-            "OK = parar de repetir nos próximos meses (remove daqui também)\n" +
+            "OK = parar de repetir nos próximos meses\n" +
             "Cancelar = remover só deste mês"
           );
-          if (tudo) db.fixas = db.fixas.filter(f => f.id !== it.fixaId);
+          if (tudo) {
+            db.fixas = db.fixas.filter(f => f.id !== it.fixaId);
+            for (const k of mesesFuturos())
+              db.meses[k].itens = db.meses[k].itens.filter(o => o.fixaId !== it.fixaId);
+          }
+        } else if (it.serie) {
+          const tudo = confirm(
+            '"' + it.nome + '" é a parcela ' + it.serie.n + "/" + it.serie.total + ".\n\n" +
+            "OK = apagar também as parcelas seguintes\n" +
+            "Cancelar = apagar só esta parcela"
+          );
+          if (tudo) {
+            for (const k of mesesFuturos())
+              db.meses[k].itens = db.meses[k].itens.filter(o => !(o.serie && o.serie.id === it.serie.id));
+          }
         }
         m.itens = m.itens.filter(x => x.id !== it.id);
         salvar(); render(); break;
@@ -426,19 +490,31 @@ li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align
     e.preventDefault();
     const nome = $("#fNome").value.trim();
     if (!nome) return;
+    const desc  = $("#fDesc").value.trim();
     const valor = parseValor($("#fValor").value);
-    const dia = parseInt($("#fDia").value, 10) || null;
-    const fixa = $("#fFixa").checked;
+    const dia   = parseInt($("#fDia").value, 10) || null;
+    const rep   = selRep.value;
 
-    let fixaId = null;
-    if (fixa) {
-      fixaId = uid();
-      db.fixas.push({ id: fixaId, nome, valor, dia });
+    if (rep === "fixa") {
+      // Todo mês, para sempre: vira modelo e entra nos meses futuros já criados.
+      const fixaId = uid();
+      db.fixas.push({ id: fixaId, nome, desc, valor, dia });
+      mes(mesAtual).itens.push(novoItem(nome, desc, valor, dia, fixaId, null));
+      for (const k of mesesFuturos()) db.meses[k].itens.push(novoItem(nome, desc, valor, dia, fixaId, null));
+      toast("Adicionada em todos os meses.");
+    } else {
+      const total = Math.max(1, Math.min(MAX_PARCELAS, parseInt(rep, 10) || 1));
+      const serieId = total > 1 ? uid() : null;
+      for (let i = 0; i < total; i++) {
+        const k = deslocaMes(mesAtual, i);
+        mes(k).itens.push(novoItem(nome, desc, valor, dia, null, serieId ? { id: serieId, n: i + 1, total } : null));
+      }
+      if (total > 1) toast("Lançada em " + total + " meses (" + total + "x).");
     }
-    mes(mesAtual).itens.push({ id: uid(), nome, valor, dia, pago: false, fixaId });
     salvar();
 
-    $("#fNome").value = ""; $("#fValor").value = ""; $("#fDia").value = ""; $("#fFixa").checked = false;
+    $("#fNome").value = ""; $("#fValor").value = ""; $("#fDia").value = ""; $("#fDesc").value = "";
+    selRep.value = "1";
     $("#fNome").focus();
     render();
   });
@@ -463,7 +539,7 @@ li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align
     let n = 0;
     for (const it of ant.itens) {
       if (jaTem.has(it.nome.toLowerCase())) continue;
-      m.itens.push({ id: uid(), nome: it.nome, valor: it.valor, dia: it.dia, pago: false, fixaId: it.fixaId || null });
+      m.itens.push(novoItem(it.nome, it.desc, it.valor, it.dia, it.fixaId, null));
       n++;
     }
     salvar(); render();
