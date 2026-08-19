@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#1e1e24" />
+<title>Contas do Mês</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<style>
+/* ── Paleta (mesma linguagem do dashboard: grafite + lima) ─────────── */
+:root{
+  --bg:#1e1e24; --card:#26262d; --card-2:#2c2c34; --border:#34343c;
+  --border-soft:#2e2e36;
+  --txt:#f0f0f4; --txt-2:#a8a8b4; --txt-3:#848491;
+  --accent:#c8ff00; --accent-ink:#1a1a1f;
+  --ok:#4ade80; --warn:#fbbf24; --danger:#f87171;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#e9e5db; --card:#f6f4ee; --card-2:#efece3; --border:#d6d1c4;
+    --border-soft:#e0dbcf;
+    --txt:#292621; --txt-2:#645e50; --txt-3:#827c6e;
+    --accent:#1e1e24; --accent-ink:#f6f4ee;
+    --ok:#15803d; --warn:#b45309; --danger:#b91c1c;
+    --shadow:0 1px 2px rgba(0,0,0,.06), 0 8px 24px -14px rgba(0,0,0,.25);
+    color-scheme: light;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  font-size:15px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  padding:0 0 96px;
+}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+
+/* ── Cabeçalho / navegação de mês ──────────────────────────────────── */
+header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border-soft)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:14px 12px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;letter-spacing:-.01em}
+.brand .dot{width:8px;height:8px;border-radius:99px;background:var(--accent);flex:none}
+.monthnav{display:flex;align-items:center;gap:4px}
+.monthnav button.arrow{
+  width:36px;height:36px;display:grid;place-items:center;border-radius:10px;
+  background:var(--card);border:1px solid var(--border);color:var(--txt-2);cursor:pointer;
+}
+.monthnav button.arrow:hover{color:var(--txt);border-color:var(--txt-3)}
+#mesLabel{
+  min-width:150px;text-align:center;padding:7px 12px;border-radius:10px;
+  background:transparent;border:1px solid transparent;color:var(--txt);
+  font-weight:650;font-size:15px;cursor:pointer;letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums;
+}
+#mesLabel:hover{background:var(--card);border-color:var(--border)}
+#mesPicker{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+@media (max-width:480px){
+  .brand{display:none}
+  .monthnav{width:100%;justify-content:space-between}
+  #mesLabel{flex:1}
+  .topbar{padding-block:10px}
+}
+
+/* ── Resumo ────────────────────────────────────────────────────────── */
+.resumo{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:16px;margin:16px 0;box-shadow:var(--shadow);
+}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-3);font-weight:600}
+.stat{min-width:0}
+.stat .val{font-size:clamp(14px,4vw,19px);font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+.stat.pago .val{color:var(--ok)}
+.stat.falta .val{color:var(--warn)}
+.bar{height:6px;border-radius:99px;background:var(--card-2);margin-top:14px;overflow:hidden;border:1px solid var(--border-soft)}
+.bar > i{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width .25s ease}
+.barinfo{display:flex;justify-content:space-between;font-size:12px;color:var(--txt-3);margin-top:6px}
+
+/* ── Formulário ────────────────────────────────────────────────────── */
+form.add{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:10px;display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align-items:center;
+  margin-bottom:14px;
+}
+@media (max-width:560px){
+  form.add{grid-template-columns:1fr 1fr;}
+  form.add .f-nome{grid-column:1 / -1}
+  form.add .f-add{grid-column:1 / -1}
+}
+input[type=text],input[type=number]{
+  width:100%;padding:10px 12px;border-radius:10px;background:var(--card-2);
+  border:1px solid var(--border);color:var(--txt);font:inherit;font-size:14px;outline:none;
+}
+input::placeholder{color:var(--txt-3)}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,255,0,.12)}
+@media (prefers-color-scheme: light){ input:focus{box-shadow:0 0 0 3px rgba(30,30,36,.10)} }
+button{font:inherit}
+.btn{
+  padding:10px 16px;border-radius:10px;border:1px solid transparent;
+  background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:14px;cursor:pointer;
+  white-space:nowrap;
+}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent;border-color:var(--border);color:var(--txt-2);font-weight:600}
+.btn.ghost:hover{color:var(--txt);border-color:var(--txt-3)}
+.fixa-toggle{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--txt-2);cursor:pointer;user-select:none;padding-left:2px}
+.fixa-toggle input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+
+/* ── Lista ─────────────────────────────────────────────────────────── */
+ul.lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+li.item{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+}
+li.item.paga{opacity:.55}
+li.item.vencida{border-color:color-mix(in srgb, var(--danger) 45%, var(--border))}
+.check{
+  flex:none;width:24px;height:24px;border-radius:8px;cursor:pointer;
+  border:1.5px solid var(--txt-3);background:transparent;display:grid;place-items:center;padding:0;
+}
+.check:hover{border-color:var(--ok)}
+.check svg{opacity:0;stroke:var(--accent-ink);width:14px;height:14px}
+li.paga .check{background:var(--ok);border-color:var(--ok)}
+li.paga .check svg{opacity:1;stroke:#0b2c16}
+.info{flex:1;min-width:0}
+.nome{font-weight:600;letter-spacing:-.01em;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+li.paga .nome{text-decoration:line-through;text-decoration-color:var(--txt-3)}
+.meta{font-size:12px;color:var(--txt-3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:1px}
+.tag{background:var(--card-2);border:1px solid var(--border-soft);padding:0 6px;border-radius:6px;font-size:11px;font-weight:600}
+.meta .atrasada{color:var(--danger);font-weight:600}
+.valor{font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;white-space:nowrap;font-size:clamp(14px,3.8vw,15px)}
+.acoes{display:flex;gap:2px;flex:none}
+.icon{
+  width:30px;height:30px;display:grid;place-items:center;border-radius:8px;
+  background:transparent;border:none;color:var(--txt-3);cursor:pointer;padding:0;
+}
+.icon:hover{background:var(--card-2);color:var(--txt)}
+.icon.del:hover{color:var(--danger)}
+
+/* linha em edição */
+li.editando{display:grid;grid-template-columns:1fr 108px 76px auto;gap:8px;align-items:center}
+@media (max-width:560px){
+  li.editando{grid-template-columns:1fr 1fr}
+  li.editando .f-nome{grid-column:1 / -1}
+  li.editando .f-acoes{grid-column:1 / -1;display:flex;gap:8px}
+}
+.vazio{text-align:center;padding:44px 20px;color:var(--txt-3);border:1px dashed var(--border);border-radius:14px}
+.vazio b{display:block;color:var(--txt-2);font-size:15px;margin-bottom:4px}
+
+/* ── Rodapé de ações ───────────────────────────────────────────────── */
+.rodape{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-soft)}
+.rodape .btn{padding:8px 12px;font-size:13px}
+.aviso{
+  margin-top:14px;font-size:12px;color:var(--txt-3);text-align:center;line-height:1.6;
+}
+/* toast */
+#toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(12px);
+  background:var(--card);border:1px solid var(--border);color:var(--txt);
+  padding:10px 16px;border-radius:12px;font-size:14px;box-shadow:var(--shadow);
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:50;max-width:90vw;text-align:center;
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap topbar">
+    <div class="brand"><span class="dot"></span> Contas do Mês</div>
+    <div class="monthnav">
+      <button class="arrow" id="prev" title="Mês anterior" aria-label="Mês anterior">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button id="mesLabel" title="Escolher mês"></button>
+      <input type="month" id="mesPicker" tabindex="-1" aria-hidden="true" />
+      <button class="arrow" id="next" title="Próximo mês" aria-label="Próximo mês">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="resumo">
+    <div class="stats">
+      <div class="stat"><div class="label">Total</div><div class="val" id="stTotal">R$ 0,00</div></div>
+      <div class="stat pago"><div class="label">Pago</div><div class="val" id="stPago">R$ 0,00</div></div>
+      <div class="stat falta"><div class="label">Falta</div><div class="val" id="stFalta">R$ 0,00</div></div>
+    </div>
+    <div class="bar"><i id="barFill" style="width:0%"></i></div>
+    <div class="barinfo"><span id="barTxt">0 de 0 contas pagas</span><span id="barPct">0%</span></div>
+  </section>
+
+  <form class="add" id="formAdd" autocomplete="off">
+    <div class="f-nome"><input type="text" id="fNome" placeholder="Nome da conta (ex: Aluguel)" required /></div>
+    <input type="text" id="fValor" inputmode="decimal" placeholder="R$ 0,00" />
+    <input type="number" id="fDia" min="1" max="31" placeholder="Dia" />
+    <div class="f-add" style="display:flex;gap:10px;align-items:center;justify-content:space-between">
+      <label class="fixa-toggle"><input type="checkbox" id="fFixa" /> Todo mês</label>
+      <button class="btn" type="submit">Adicionar</button>
+    </div>
+  </form>
+
+  <ul class="lista" id="lista"></ul>
+
+  <div class="rodape">
+    <button class="btn ghost" id="btnCopiar">Copiar contas do mês anterior</button>
+    <button class="btn ghost" id="btnExport">Exportar backup</button>
+    <button class="btn ghost" id="btnImport">Importar backup</button>
+    <input type="file" id="fileImport" accept="application/json" style="display:none" />
+  </div>
+  <p class="aviso">Os dados ficam salvos neste navegador. Use “Exportar backup” de vez em quando.</p>
+</main>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const KEY = "financas.v1";
+  const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const BRL = new Intl.NumberFormat("pt-BR", { style:"currency", currency:"BRL" });
+
+  // ── Helpers de id e de mês (declarações hoisted: usadas já no estado) ─
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function chaveMes(d){ return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
+  function rotuloMes(k){ const [a, m] = k.split("-"); return MESES[+m - 1] + " " + a; }
+
+  // ── Estado ──────────────────────────────────────────────────────────
+  // db = { fixas:[{id,nome,valor,dia}], meses:{ "2026-08": {semeado:true, itens:[...]} } }
+  // item = { id, nome, valor, dia, pago, fixaId|null }
+  let db = carregar();
+  let mesAtual = chaveMes(new Date());
+  let editando = null;
+
+  function carregar(){
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return { fixas: [], meses: {} };
+      const d = JSON.parse(raw);
+      return { fixas: d.fixas || [], meses: d.meses || {} };
+    } catch { return { fixas: [], meses: {} }; }
+  }
+  function salvar(){ localStorage.setItem(KEY, JSON.stringify(db)); }
+
+  function deslocaMes(k, delta){
+    const [a, m] = k.split("-").map(Number);
+    const d = new Date(a, m - 1 + delta, 1);
+    return chaveMes(d);
+  }
+
+  // Cria o mês na primeira visita, já semeado com as contas fixas.
+  function mes(k){
+    if (!db.meses[k]) {
+      db.meses[k] = {
+        semeado: true,
+        itens: db.fixas.map(f => ({ id: uid(), nome: f.nome, valor: f.valor, dia: f.dia, pago: false, fixaId: f.id }))
+      };
+      salvar();
+    }
+    return db.meses[k];
+  }
+
+  // ── Parsing / formatação de valores ─────────────────────────────────
+  function parseValor(txt){
+    if (typeof txt === "number") return txt;
+    let s = String(txt || "").replace(/[^\d,.-]/g, "").trim();
+    if (!s) return 0;
+    // "1.234,56" → "1234.56"  |  "1234,56" → "1234.56"
+    if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  }
+  const fmt = (n) => BRL.format(n || 0);
+
+  // ── Datas ───────────────────────────────────────────────────────────
+  const hojeK = chaveMes(new Date());
+  const diaHoje = new Date().getDate();
+  function estaVencida(item, k){
+    if (item.pago) return false;
+    if (k < hojeK) return true;
+    if (k > hojeK) return false;
+    return item.dia ? item.dia < diaHoje : false;
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────
+  const $ = (s) => document.querySelector(s);
+  const lista = $("#lista");
+
+  function render(){
+    $("#mesLabel").textContent = rotuloMes(mesAtual);
+    $("#mesPicker").value = mesAtual;
+
+    const itens = mes(mesAtual).itens.slice().sort((a, b) => (a.dia || 99) - (b.dia || 99));
+
+    const total = itens.reduce((s, i) => s + (i.valor || 0), 0);
+    const pago  = itens.filter(i => i.pago).reduce((s, i) => s + (i.valor || 0), 0);
+    $("#stTotal").textContent = fmt(total);
+    $("#stPago").textContent  = fmt(pago);
+    $("#stFalta").textContent = fmt(total - pago);
+    const nPagas = itens.filter(i => i.pago).length;
+    const pct = itens.length ? Math.round((nPagas / itens.length) * 100) : 0;
+    $("#barFill").style.width = pct + "%";
+    $("#barTxt").textContent = nPagas + " de " + itens.length + (itens.length === 1 ? " conta paga" : " contas pagas");
+    $("#barPct").textContent = pct + "%";
+
+    lista.innerHTML = "";
+    if (!itens.length) {
+      lista.innerHTML = '<li class="vazio"><b>Nenhuma conta neste mês</b>Adicione acima ou copie as do mês anterior.</li>';
+      return;
+    }
+    for (const it of itens) lista.appendChild(it.id === editando ? linhaEdicao(it) : linha(it));
+  }
+
+  function linha(it){
+    const li = document.createElement("li");
+    li.className = "item" + (it.pago ? " paga" : "") + (estaVencida(it, mesAtual) ? " vencida" : "");
+    li.dataset.id = it.id;
+
+    const meta = [];
+    if (it.dia) meta.push('<span>vence dia ' + it.dia + "</span>");
+    if (it.fixaId) meta.push('<span class="tag">fixa</span>');
+    if (estaVencida(it, mesAtual)) meta.push('<span class="atrasada">atrasada</span>');
+
+    li.innerHTML =
+      '<button class="check" data-act="toggle" aria-label="Marcar como paga" aria-pressed="' + !!it.pago + '">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' +
+      "</button>" +
+      '<div class="info"><span class="nome"></span>' + (meta.length ? '<span class="meta">' + meta.join("") + "</span>" : "") + "</div>" +
+      '<span class="valor">' + fmt(it.valor) + "</span>" +
+      '<div class="acoes">' +
+        '<button class="icon" data-act="editar" title="Editar" aria-label="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>' +
+        '<button class="icon del" data-act="excluir" title="Excluir" aria-label="Excluir"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>' +
+      "</div>";
+    li.querySelector(".nome").textContent = it.nome;
+    return li;
+  }
+
+  function linhaEdicao(it){
+    const li = document.createElement("li");
+    li.className = "item editando";
+    li.dataset.id = it.id;
+    li.innerHTML =
+      '<div class="f-nome"><input type="text" class="e-nome" /></div>' +
+      '<input type="text" class="e-valor" inputmode="decimal" />' +
+      '<input type="number" class="e-dia" min="1" max="31" placeholder="Dia" />' +
+      '<div class="f-acoes" style="display:flex;gap:6px">' +
+        '<button class="btn" data-act="salvar">Salvar</button>' +
+        '<button class="btn ghost" data-act="cancelar">Cancelar</button>' +
+      "</div>";
+    li.querySelector(".e-nome").value = it.nome;
+    li.querySelector(".e-valor").value = it.valor ? it.valor.toFixed(2).replace(".", ",") : "";
+    li.querySelector(".e-dia").value = it.dia || "";
+    setTimeout(() => li.querySelector(".e-nome").focus(), 0);
+    return li;
+  }
+
+  function toast(msg){
+    const t = $("#toast");
+    t.textContent = msg;
+    t.classList.add("on");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => t.classList.remove("on"), 2200);
+  }
+
+  // ── Ações da lista ──────────────────────────────────────────────────
+  lista.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    const li = e.target.closest("li[data-id]");
+    if (!li) return;
+    const m = mes(mesAtual);
+    const it = m.itens.find(x => x.id === li.dataset.id);
+    if (!it) return;
+
+    switch (btn.dataset.act) {
+      case "toggle":
+        it.pago = !it.pago; salvar(); render(); break;
+      case "editar":
+        editando = it.id; render(); break;
+      case "cancelar":
+        editando = null; render(); break;
+      case "salvar": {
+        const nome = li.querySelector(".e-nome").value.trim();
+        if (!nome) { li.querySelector(".e-nome").focus(); return; }
+        it.nome  = nome;
+        it.valor = parseValor(li.querySelector(".e-valor").value);
+        it.dia   = parseInt(li.querySelector(".e-dia").value, 10) || null;
+        // Se é uma conta fixa, o modelo acompanha a edição (vale para os próximos meses).
+        if (it.fixaId) {
+          const f = db.fixas.find(x => x.id === it.fixaId);
+          if (f) { f.nome = it.nome; f.valor = it.valor; f.dia = it.dia; }
+        }
+        editando = null; salvar(); render(); break;
+      }
+      case "excluir": {
+        const fixa = it.fixaId && db.fixas.some(f => f.id === it.fixaId);
+        if (fixa) {
+          const tudo = confirm(
+            '"' + it.nome + '" é uma conta fixa.\n\n' +
+            "OK = parar de repetir nos próximos meses (remove daqui também)\n" +
+            "Cancelar = remover só deste mês"
+          );
+          if (tudo) db.fixas = db.fixas.filter(f => f.id !== it.fixaId);
+        }
+        m.itens = m.itens.filter(x => x.id !== it.id);
+        salvar(); render(); break;
+      }
+    }
+  });
+
+  lista.addEventListener("keydown", (e) => {
+    if (!editando) return;
+    if (e.key === "Enter") { e.preventDefault(); e.target.closest("li")?.querySelector('[data-act="salvar"]')?.click(); }
+    if (e.key === "Escape") { editando = null; render(); }
+  });
+
+  // ── Adicionar ───────────────────────────────────────────────────────
+  $("#formAdd").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const nome = $("#fNome").value.trim();
+    if (!nome) return;
+    const valor = parseValor($("#fValor").value);
+    const dia = parseInt($("#fDia").value, 10) || null;
+    const fixa = $("#fFixa").checked;
+
+    let fixaId = null;
+    if (fixa) {
+      fixaId = uid();
+      db.fixas.push({ id: fixaId, nome, valor, dia });
+    }
+    mes(mesAtual).itens.push({ id: uid(), nome, valor, dia, pago: false, fixaId });
+    salvar();
+
+    $("#fNome").value = ""; $("#fValor").value = ""; $("#fDia").value = ""; $("#fFixa").checked = false;
+    $("#fNome").focus();
+    render();
+  });
+
+  // ── Navegação de mês ────────────────────────────────────────────────
+  function irPara(k){ mesAtual = k; editando = null; render(); }
+  $("#prev").addEventListener("click", () => irPara(deslocaMes(mesAtual, -1)));
+  $("#next").addEventListener("click", () => irPara(deslocaMes(mesAtual, +1)));
+  $("#mesLabel").addEventListener("click", () => {
+    const p = $("#mesPicker");
+    if (p.showPicker) { try { p.showPicker(); return; } catch {} }
+    p.style.pointerEvents = "auto"; p.style.opacity = "0.01"; p.focus(); p.click();
+  });
+  $("#mesPicker").addEventListener("change", (e) => { if (e.target.value) irPara(e.target.value); });
+
+  // ── Copiar mês anterior ─────────────────────────────────────────────
+  $("#btnCopiar").addEventListener("click", () => {
+    const ant = db.meses[deslocaMes(mesAtual, -1)];
+    if (!ant || !ant.itens.length) { toast("O mês anterior não tem contas."); return; }
+    const m = mes(mesAtual);
+    const jaTem = new Set(m.itens.map(i => i.nome.toLowerCase()));
+    let n = 0;
+    for (const it of ant.itens) {
+      if (jaTem.has(it.nome.toLowerCase())) continue;
+      m.itens.push({ id: uid(), nome: it.nome, valor: it.valor, dia: it.dia, pago: false, fixaId: it.fixaId || null });
+      n++;
+    }
+    salvar(); render();
+    toast(n ? n + (n === 1 ? " conta copiada" : " contas copiadas") : "Nada novo para copiar.");
+  });
+
+  // ── Backup ──────────────────────────────────────────────────────────
+  $("#btnExport").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "contas-backup-" + chaveMes(new Date()) + ".json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $("#btnImport").addEventListener("click", () => $("#fileImport").click());
+  $("#fileImport").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const d = JSON.parse(r.result);
+        if (!d || typeof d !== "object" || !d.meses) throw new Error("formato");
+        if (!confirm("Isso substitui todas as contas salvas neste navegador. Continuar?")) return;
+        db = { fixas: d.fixas || [], meses: d.meses || {} };
+        salvar(); render(); toast("Backup importado.");
+      } catch { toast("Arquivo inválido."); }
+    };
+    r.readAsText(file);
+    e.target.value = "";
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
