@@ -102,8 +102,13 @@
         <label for="mDesc">Descrição</label>
         <textarea id="mDesc" placeholder="Detalhes, links, o que precisa ser feito…"></textarea>
       </div>
+      <div class="campo-linha tres">
+        <div class="campo"><label for="mData">Dia</label><input type="date" id="mData" /></div>
+        <div class="campo"><label for="mHora">Hora</label><input type="time" id="mHora" /></div>
+        <div class="campo"><label for="mDuracao">Duração</label><select id="mDuracao"></select></div>
+      </div>
       <div class="campo-linha">
-        <div class="campo"><label for="mPrazo">Prazo</label><input type="date" id="mPrazo" /></div>
+        <div class="campo"><label for="mLembrete">Lembrete</label><select id="mLembrete"></select></div>
         <div class="campo"><label for="mColuna">Coluna</label><select id="mColuna"></select></div>
       </div>
       <div class="campo">
@@ -118,6 +123,9 @@
     </div>
     <div class="modal-pe">
       <button type="button" class="btn perigo sm" id="mExcluir">Excluir card</button>
+      <button type="button" class="btn ghost sm" id="mGoogle" title="Abrir no Google Agenda">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="rotulo">Google Agenda</span>
+      </button>
       <span class="espaco"></span>
       <button type="button" class="btn ghost sm" id="mCancelar">Cancelar</button>
       <button type="button" class="btn sm" id="mSalvar">Salvar</button>

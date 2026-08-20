@@ -52,7 +52,7 @@ header .wrap{max-width:1200px}
 @media (max-width:480px){ .brand span:not(.dot){display:none} }
 
 /* ── Campos e botões ──────────────────────────────────────────────── */
-input[type=text],input[type=number],input[type=date],select,textarea{
+input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{
   width:100%;padding:10px 12px;border-radius:10px;background:var(--card-2);
   border:1px solid var(--border);color:var(--txt);font:inherit;font-size:14px;outline:none;
 }
@@ -233,7 +233,7 @@ li.paga .nome{text-decoration:line-through;text-decoration-color:var(--txt-3)}
   flex:none;width:18px;height:18px;margin-top:1px;border-radius:6px;border:1.5px solid var(--txt-3);
   background:transparent;display:grid;place-items:center;padding:0;cursor:pointer;
 }
-.kcard .kcheck svg{opacity:0;width:11px;height:11px;stroke:#0b2c16}
+.kcheck svg{opacity:0;width:11px;height:11px;stroke:#0b2c16}   /* vale no card, no modal e no checklist */
 .kcard.feito .kcheck{background:var(--ok);border-color:var(--ok)}
 .kcard.feito .kcheck svg{opacity:1}
 .kcard.feito{opacity:.6}
@@ -281,7 +281,12 @@ dialog::backdrop{background:rgba(0,0,0,.55)}
 .modal-body{padding:14px 16px;display:flex;flex-direction:column;gap:16px;max-height:min(64vh,560px);overflow-y:auto}
 .campo > label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-3);font-weight:700;margin-bottom:6px}
 .campo-linha{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media (max-width:460px){ .campo-linha{grid-template-columns:1fr} }
+.campo-linha.tres{grid-template-columns:1.2fr 1fr 1fr}
+@media (max-width:460px){ .campo-linha,.campo-linha.tres{grid-template-columns:1fr} }
+.campo input:disabled,.campo select:disabled{opacity:.45;cursor:not-allowed}
+.modal-pe .btn{display:inline-flex;align-items:center;gap:6px}
+.modal-pe .btn svg{width:14px;height:14px;flex:none}
+.modal-pe .btn:disabled{opacity:.4;cursor:not-allowed}
 .chk-lista{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:2px}
 .chk-item{display:flex;align-items:center;gap:9px;padding:5px 6px;border-radius:8px}
 .chk-item:hover{background:var(--card-2)}
