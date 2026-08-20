@@ -43,6 +43,31 @@
     '<svg width="' + (tam || 14) + '" height="' + (tam || 14) + '" viewBox="0 0 24 24" fill="none" ' +
     'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + "</svg>";
 
+  // ── Tema (claro / escuro) ───────────────────────────────────────────
+  const TEMA_KEY = "painel.tema";
+  const SOL = svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', 16);
+  const LUA = svg('<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>', 16);
+
+  function aplicaTema(){
+    const salvo = localStorage.getItem(TEMA_KEY);
+    const escuro = salvo ? salvo === "escuro" : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.tema = escuro ? "escuro" : "claro";
+    const b = $("#btnTema");
+    b.innerHTML = escuro ? SOL : LUA;
+    b.title = escuro ? "Mudar para o tema claro" : "Mudar para o tema escuro";
+    const meta = $('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", escuro ? "#1a1b21" : "#f3f4f8");
+  }
+  $("#btnTema").addEventListener("click", () => {
+    localStorage.setItem(TEMA_KEY, document.documentElement.dataset.tema === "escuro" ? "claro" : "escuro");
+    aplicaTema();
+  });
+  // enquanto o usuário não escolher, acompanha o sistema em tempo real
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (!localStorage.getItem(TEMA_KEY)) aplicaTema();
+  });
+  aplicaTema();
+
   // ── Abas ────────────────────────────────────────────────────────────
   const ABA_KEY = "painel.aba";
   function abrirAba(nome){

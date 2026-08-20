@@ -12,6 +12,16 @@ python3 -m http.server 4321 --directory financas
 Depois abrir http://localhost:4321. Também funciona abrindo o `index.html` direto, mas
 com servidor o salvamento é mais confiável.
 
+## Tema
+
+Botão de sol/lua no cabeçalho alterna entre **claro** e **escuro**. Enquanto você não escolher,
+o app segue o tema do sistema; depois do primeiro clique, a escolha fica salva (`painel.tema`).
+O tema é aplicado por um script no `<head>`, antes da primeira pintura, então não pisca ao abrir.
+
+A cor de destaque é índigo/roxo (`#7c6cff` no escuro, `#5a49e8` no claro) — funciona bem sobre
+fundo escuro e sobre branco. O verde ficou reservado só para o que está concluído: conta paga,
+card feito e item de checklist.
+
 ## Arquivos
 
 ```

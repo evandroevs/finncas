@@ -1,28 +1,31 @@
 /* ══════════════════════════════════════════════════════════════════════
    Painel — estilos compartilhados (Contas + Atividades)
-   Paleta na mesma linguagem do dashboard: grafite + lima.
+
+   Tema: o atributo data-tema no <html> manda ("escuro" | "claro"). Ele é
+   definido por um script no <head> antes da primeira pintura, então não
+   pisca ao carregar. Sem escolha salva, segue o sistema.
    ══════════════════════════════════════════════════════════════════════ */
-:root{
-  --bg:#1e1e24; --card:#26262d; --card-2:#2c2c34; --card-3:#33333c;
-  --border:#34343c; --border-soft:#2e2e36;
-  --txt:#f0f0f4; --txt-2:#a8a8b4; --txt-3:#848491;
-  --accent:#c8ff00; --accent-ink:#1a1a1f;
-  --ok:#4ade80; --warn:#fbbf24; --danger:#f87171;
+:root, :root[data-tema="escuro"]{
+  --bg:#1a1b21; --card:#23242c; --card-2:#292b34; --card-3:#31333e;
+  --border:#343642; --border-soft:#2c2e38;
+  --txt:#f0f1f5; --txt-2:#a6a9b8; --txt-3:#7f8394;
+  --accent:#7c6cff; --accent-hover:#9184ff; --accent-ink:#ffffff;
+  --anel:rgba(124,108,255,.32);
+  --ok:#4ade80; --ok-ink:#0b2c16; --warn:#fbbf24; --danger:#f87171;
   --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
   --shadow-lg:0 12px 40px -8px rgba(0,0,0,.7);
   color-scheme: dark;
 }
-@media (prefers-color-scheme: light){
-  :root{
-    --bg:#e9e5db; --card:#f6f4ee; --card-2:#efece3; --card-3:#e5e1d5;
-    --border:#d6d1c4; --border-soft:#e0dbcf;
-    --txt:#292621; --txt-2:#645e50; --txt-3:#827c6e;
-    --accent:#1e1e24; --accent-ink:#f6f4ee;
-    --ok:#15803d; --warn:#b45309; --danger:#b91c1c;
-    --shadow:0 1px 2px rgba(0,0,0,.06), 0 8px 24px -14px rgba(0,0,0,.25);
-    --shadow-lg:0 14px 44px -10px rgba(0,0,0,.32);
-    color-scheme: light;
-  }
+:root[data-tema="claro"]{
+  --bg:#f3f4f8; --card:#ffffff; --card-2:#f5f6fa; --card-3:#ebedf3;
+  --border:#e1e4ec; --border-soft:#edeef4;
+  --txt:#191b22; --txt-2:#555a6a; --txt-3:#828899;
+  --accent:#5a49e8; --accent-hover:#4b3ad6; --accent-ink:#ffffff;
+  --anel:rgba(90,73,232,.22);
+  --ok:#16a34a; --ok-ink:#ffffff; --warn:#b45309; --danger:#dc2626;
+  --shadow:0 1px 2px rgba(16,18,35,.05), 0 8px 24px -14px rgba(16,18,35,.25);
+  --shadow-lg:0 14px 44px -10px rgba(16,18,35,.28);
+  color-scheme: light;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -42,6 +45,13 @@ header .wrap{max-width:1200px}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px 0}
 .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
 .brand .dot{width:8px;height:8px;border-radius:99px;background:var(--accent);flex:none}
+.cabeca-dir{display:flex;align-items:center;gap:4px}
+#btnTema{
+  width:34px;height:34px;display:grid;place-items:center;border-radius:9px;flex:none;
+  background:transparent;border:1px solid var(--border);color:var(--txt-2);cursor:pointer;padding:0;
+}
+#btnTema:hover{color:var(--txt);border-color:var(--txt-3);background:var(--card)}
+#btnTema svg{width:16px;height:16px}
 .tabs{display:flex;gap:2px}
 .tabs button{
   background:none;border:none;padding:10px 14px 12px;color:var(--txt-3);font-weight:600;font-size:14px;
@@ -63,14 +73,13 @@ select{
   background-repeat:no-repeat;background-position:right 9px center;
 }
 input::placeholder,textarea::placeholder{color:var(--txt-3)}
-input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,255,0,.12)}
-@media (prefers-color-scheme: light){ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(30,30,36,.10)} }
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--anel)}
 button{font:inherit}
 .btn{
   padding:10px 16px;border-radius:10px;border:1px solid transparent;
   background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;
 }
-.btn:hover{filter:brightness(1.06)}
+.btn:hover{background:var(--accent-hover)}
 .btn.ghost{background:transparent;border-color:var(--border);color:var(--txt-2);font-weight:600}
 .btn.ghost:hover{color:var(--txt);border-color:var(--txt-3)}
 .btn.perigo{background:transparent;border-color:var(--border);color:var(--danger);font-weight:600}
@@ -136,7 +145,7 @@ li.item.vencida{border-color:color-mix(in srgb, var(--danger) 45%, var(--border)
 .check:hover{border-color:var(--ok)}
 .check svg{opacity:0;width:14px;height:14px}
 li.paga .check{background:var(--ok);border-color:var(--ok)}
-li.paga .check svg{opacity:1;stroke:#0b2c16}
+li.paga .check svg{opacity:1;stroke:var(--ok-ink)}
 .info{flex:1;min-width:0}
 .nome{font-weight:600;letter-spacing:-.01em;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 li.paga .nome{text-decoration:line-through;text-decoration-color:var(--txt-3)}
@@ -233,7 +242,7 @@ li.paga .nome{text-decoration:line-through;text-decoration-color:var(--txt-3)}
   flex:none;width:18px;height:18px;margin-top:1px;border-radius:6px;border:1.5px solid var(--txt-3);
   background:transparent;display:grid;place-items:center;padding:0;cursor:pointer;
 }
-.kcheck svg{opacity:0;width:11px;height:11px;stroke:#0b2c16}   /* vale no card, no modal e no checklist */
+.kcheck svg{opacity:0;width:11px;height:11px;stroke:var(--ok-ink)}   /* vale no card, no modal e no checklist */
 .kcard.feito .kcheck{background:var(--ok);border-color:var(--ok)}
 .kcard.feito .kcheck svg{opacity:1}
 .kcard.feito{opacity:.6}
@@ -296,7 +305,7 @@ dialog::backdrop{background:rgba(0,0,0,.55)}
 .kcheck.marcado{background:var(--ok);border-color:var(--ok)}
 .kcheck.marcado svg{opacity:1}
 .modal-head .kcheck{width:22px;height:22px;margin-top:4px}
-.modal-head .kcheck svg{width:13px;height:13px;stroke:#0b2c16}
+.modal-head .kcheck svg{width:13px;height:13px;stroke:var(--ok-ink)}
 .chk-add{display:flex;gap:6px}
 .chk-barra{height:5px;border-radius:99px;background:var(--card-2);margin-bottom:8px;overflow:hidden;border:1px solid var(--border-soft)}
 .chk-barra > i{display:block;height:100%;background:var(--ok);transition:width .2s ease}
