@@ -25,6 +25,7 @@
       <nav class="tabs" id="tabs" role="tablist">
         <button role="tab" data-tab="contas" aria-selected="true">Contas</button>
         <button role="tab" data-tab="quadros" aria-selected="false">Atividades</button>
+        <button role="tab" data-tab="metas" aria-selected="false">Metas</button>
       </nav>
       <button id="btnTema" aria-label="Alternar tema"></button>
     </div>
@@ -96,6 +97,107 @@
   <div class="board" id="board"></div>
 </section>
 
+<!-- ══════════════════ ABA METAS ══════════════════ -->
+<section id="tab-metas" role="tabpanel" class="oculto">
+  <div class="metas-bar">
+    <select class="sel-area" id="selArea" aria-label="Área da vida"></select>
+    <button class="btn sm" id="btnNovaMeta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="rotulo">Nova meta</span>
+    </button>
+    <span class="espaco"></span>
+    <button class="btn ghost sm" data-backup="exportar"><span class="rotulo">Exportar backup</span></button>
+  </div>
+
+  <div class="revisao-aviso" id="revisaoAviso"></div>
+  <div class="metas-resumo" id="metasResumo"></div>
+  <div class="mapa" id="mapa"></div>
+</section>
+
+<!-- Modal de meta -->
+<dialog id="modalMeta">
+  <div class="modal-head">
+    <input type="text" id="gTitulo" placeholder="O que você quer alcançar" />
+    <button type="button" class="icon" id="gFechar" title="Fechar" aria-label="Fechar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="campo">
+      <label for="gDetalhe">Por que essa meta importa</label>
+      <textarea id="gDetalhe" placeholder="O que muda na sua vida quando ela for cumprida. Isso é o que segura o plano nos meses difíceis."></textarea>
+    </div>
+    <div class="linha-3">
+      <div class="campo"><label for="gHorizonte">Horizonte</label><select id="gHorizonte"></select></div>
+      <div class="campo"><label for="gArea">Área da vida</label><select id="gArea"></select></div>
+      <div class="campo"><label for="gPrazo">Prazo</label><input type="month" id="gPrazo" /></div>
+    </div>
+    <div class="campo">
+      <label for="gPai">Puxa de qual meta maior</label>
+      <select id="gPai"></select>
+    </div>
+    <div class="campo">
+      <label for="gTipoMedida">Como medir</label>
+      <select id="gTipoMedida">
+        <option value="numero">Número (de X até Y)</option>
+        <option value="marcos">Marcos (lista de etapas)</option>
+        <option value="simples">Sem número — só acompanhar</option>
+      </select>
+    </div>
+    <div class="linha-3" id="blocoNumero">
+      <div class="campo"><label for="gInicio">Ponto de partida</label><input type="text" id="gInicio" inputmode="decimal" placeholder="0" /></div>
+      <div class="campo"><label for="gAlvo">Alvo</label><input type="text" id="gAlvo" inputmode="decimal" placeholder="100" /></div>
+      <div class="campo"><label for="gUnidade">Unidade</label><input type="text" id="gUnidade" placeholder="R$, kg, clientes…" /></div>
+    </div>
+    <div class="campo" id="blocoMarcos">
+      <label>Marcos <span id="gMarcosResumo" style="text-transform:none;letter-spacing:0"></span></label>
+      <div class="chk-barra" id="gMarcosBarra"><i style="width:0%"></i></div>
+      <ul class="chk-lista" id="gMarcosLista"></ul>
+      <div class="chk-add">
+        <input type="text" id="gMarcoNovo" placeholder="Adicionar marco…" />
+        <button type="button" class="btn sm" id="gMarcoAdd">Adicionar</button>
+      </div>
+    </div>
+    <div class="campo">
+      <label>Como está</label>
+      <div class="rev-status" id="gStatus"></div>
+    </div>
+    <div class="campo" id="blocoFilhos">
+      <label>Metas que puxam desta</label>
+      <div class="filhos-lista" id="gFilhos"></div>
+    </div>
+    <div class="campo" id="blocoHistorico">
+      <label>Histórico das revisões</label>
+      <div class="linha-tempo" id="gHistorico"></div>
+    </div>
+  </div>
+  <div class="modal-pe">
+    <button type="button" class="btn perigo sm" id="gExcluir">Excluir meta</button>
+    <span class="espaco"></span>
+    <button type="button" class="btn ghost sm" id="gCancelar">Cancelar</button>
+    <button type="button" class="btn sm" id="gSalvar">Salvar</button>
+  </div>
+</dialog>
+
+<!-- Modal da revisão mensal -->
+<dialog id="modalRevisao" class="largo">
+  <div class="modal-head">
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:16px" id="rTitulo">Revisão do mês</div>
+      <div style="font-size:12.5px;color:var(--txt-3)" id="rSub"></div>
+    </div>
+    <button type="button" class="icon" id="rFechar" title="Fechar" aria-label="Fechar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="modal-body" id="rCorpo"></div>
+  <div class="modal-pe">
+    <button type="button" class="btn perigo sm" id="rExcluir">Excluir revisão</button>
+    <span class="espaco"></span>
+    <button type="button" class="btn ghost sm" id="rCancelar">Fechar</button>
+    <button type="button" class="btn sm" id="rSalvar">Salvar revisão</button>
+  </div>
+</dialog>
+
 <!-- Modal de card -->
 <dialog id="modalCard">
   <form method="dialog" id="formCard">
@@ -150,5 +252,6 @@
 <script src="assets/base.js"></script>
 <script src="assets/contas.js"></script>
 <script src="assets/quadros.js"></script>
+<script src="assets/metas.js"></script>
 </body>
 </html>

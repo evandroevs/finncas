@@ -72,8 +72,7 @@
   const ABA_KEY = "painel.aba";
   function abrirAba(nome){
     $$("#tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === nome)));
-    $("#tab-contas").classList.toggle("oculto", nome !== "contas");
-    $("#tab-quadros").classList.toggle("oculto", nome !== "quadros");
+    $$('section[id^="tab-"]').forEach(sec => sec.classList.toggle("oculto", sec.id !== "tab-" + nome));
     localStorage.setItem(ABA_KEY, nome);
     document.dispatchEvent(new CustomEvent("aba:mudou", { detail: nome }));
   }
@@ -83,10 +82,10 @@
   });
 
   // ── Backup (contas + quadros no mesmo arquivo) ──────────────────────
-  const CHAVES = { contas: "financas.v1", quadros: "quadros.v1" };
+  const CHAVES = { contas: "financas.v1", quadros: "quadros.v1", metas: "metas.v1" };
 
   function exportar(){
-    const dados = { versao: 2, contas: ler(CHAVES.contas, null), quadros: ler(CHAVES.quadros, null) };
+    const dados = { versao: 3, contas: ler(CHAVES.contas, null), quadros: ler(CHAVES.quadros, null), metas: ler(CHAVES.metas, null) };
     const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     const d = new Date();
@@ -105,13 +104,16 @@
     const ehAntigo = d.meses && !d.contas && !d.quadros;
     const contas  = ehAntigo ? d : d.contas;
     const quadros = ehAntigo ? null : d.quadros;
-    if (!contas && !quadros) { toast("Arquivo inválido."); return; }
+    const metas   = ehAntigo ? null : d.metas;
+    if (!contas && !quadros && !metas) { toast("Arquivo inválido."); return; }
 
-    const oque = [contas && "contas", quadros && "quadros"].filter(Boolean).join(" e ");
+    const partes = [contas && "contas", quadros && "quadros", metas && "metas"].filter(Boolean);
+    const oque = partes.length > 1 ? partes.slice(0, -1).join(", ") + " e " + partes[partes.length - 1] : partes[0];
     if (!confirm("Isso substitui " + oque + " deste navegador. Continuar?")) return;
 
     if (contas)  gravar(CHAVES.contas, contas);
     if (quadros) gravar(CHAVES.quadros, quadros);
+    if (metas)   gravar(CHAVES.metas, metas);
     document.dispatchEvent(new CustomEvent("dados:importados"));
     toast("Backup importado.");
   }
@@ -209,6 +211,7 @@
   window.App = { $, $$, uid, ler, gravar, toast, el, svg, abrirAba, arrastavel, CHAVES };
 
   document.addEventListener("DOMContentLoaded", () => {
-    abrirAba(localStorage.getItem(ABA_KEY) === "quadros" ? "quadros" : "contas");
+    const salva = localStorage.getItem(ABA_KEY);
+    abrirAba($("#tab-" + salva) ? salva : "contas");
   });
 })();

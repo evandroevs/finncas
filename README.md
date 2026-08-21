@@ -1,7 +1,8 @@
-# Painel — Contas e Atividades
+# Painel — Contas, Atividades e Metas
 
-Duas abas, sem build e sem dependências: **Contas** (checklist de contas por mês) e
-**Atividades** (quadros estilo Trello, um por empresa).
+Três abas, sem build e sem dependências: **Contas** (checklist de contas por mês),
+**Atividades** (quadros estilo Trello, um por empresa) e **Metas** (o mapa do projeto de vida,
+com revisão mensal).
 
 ## Como usar
 
@@ -30,6 +31,7 @@ assets/app.css    paleta e estilos
 assets/base.js    utilidades: abas, backup, motor de arrastar
 assets/contas.js  aba Contas
 assets/quadros.js aba Atividades (kanban)
+assets/metas.js   aba Metas (mapa de horizontes + revisão)
 ```
 
 ## Aba Contas
@@ -99,10 +101,45 @@ Para ligar de verdade, o que falta é: um projeto no Google Cloud com a Calendar
 OAuth com o escopo `https://www.googleapis.com/auth/calendar.events`, e guardar o refresh token
 fora do navegador (uma edge function do Supabase, como já é feito com o Google Ads).
 
+## Aba Metas
+
+O mapa vai do horizonte mais longo ao mais curto: **10 anos · 5 anos · 3 anos · 1 ano ·
+semestre · trimestre · mês**. Cada faixa é um horizonte, e cada meta mora em uma faixa.
+
+O que amarra tudo é o campo **"puxa de qual meta maior"**: a meta do mês puxa da trimestral,
+que puxa da anual, que puxa da de 3 anos, e assim por diante. Passar o mouse em qualquer meta
+acende a linhagem inteira — de onde ela veio e o que depende dela — e apaga o resto. É isso que
+faz o conjunto ser um mapa e não sete listas soltas.
+
+Cada meta tem:
+
+- **área da vida** (financeiro, negócio, saúde, família, aprendizado, pessoal) — a cor da borda;
+- **por que essa meta importa** — o texto que segura o plano nos meses difíceis;
+- **prazo** — mês/ano nos horizontes curtos, só o ano nos longos; fica vermelho se passar;
+- **como medir**: número (de X até Y, com unidade), marcos (lista de etapas) ou só acompanhar;
+- **status**: no rumo, atenção, travada ou concluída.
+
+### A revisão mensal
+
+O aviso no topo da aba diz se a revisão do mês está pendente. A revisão passa **meta a meta,
+do mês para o 10 anos** — a ordem importa: o curto prazo é o que muda toda hora. Em cada meta
+você atualiza o número, escreve o que aconteceu e escolhe o status; quando existe registro
+anterior, ela mostra `na revisão anterior: R$ 640.000 (jul/26)` para você ver o movimento.
+No fim, três perguntas: o que funcionou, o que travou e qual o foco do mês que vem.
+
+Salvar faz duas coisas: guarda o registro daquele mês e **move as metas** (o número vira o
+atual, o status vira o status). Toda revisão fica no histórico — na barra do topo e dentro de
+cada meta, em ordem de tempo.
+
+Duas regras para o histórico não virar ficção: reabrir um mês que já foi revisado depois
+corrige só o registro daquele mês, sem puxar os números atuais para trás; e num mês antigo os
+campos vêm em branco, mostrando só o que foi de fato registrado na época.
+
 ## Onde ficam os dados
 
-No `localStorage` do navegador — `financas.v1` (contas) e `quadros.v1` (atividades) — neste
-computador/navegador. Não sincroniza entre dispositivos: use **Exportar backup** / **Importar backup**,
-que geram um `.json` único com as duas abas. Backups antigos, só de contas, continuam sendo aceitos.
+No `localStorage` do navegador — `financas.v1` (contas), `quadros.v1` (atividades) e `metas.v1`
+(metas e revisões) — neste computador/navegador. Não sincroniza entre dispositivos: use
+**Exportar backup** / **Importar backup**, que geram um `.json` único com as três abas.
+Backups antigos, de versões com menos abas, continuam sendo aceitos.
 
 Para acessar do celular e do computador com os mesmos dados, seria preciso ligar num banco (ex: Supabase).
