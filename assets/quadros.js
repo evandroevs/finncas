@@ -14,6 +14,18 @@
   const DURACOES = [[15,"15 min"],[30,"30 min"],[45,"45 min"],[60,"1 h"],[90,"1h30"],[120,"2 h"],[180,"3 h"],[240,"4 h"],[480,"8 h"]];
   const LEMBRETES = [["","Sem lembrete"],[10,"10 min antes"],[30,"30 min antes"],[60,"1 h antes"],[120,"2 h antes"],[1440,"1 dia antes"]];
 
+  // Prioridade por cor, do jeito que o Evandro descreveu:
+  // vermelho = faz primeiro (é o que gera resultado) · amarelo = importante, mas negociável
+  // verde = necessária e maleável, mas tem que sair
+  const PRIORIDADES = [
+    { id: "alta",  nome: "Máxima",     cor: "var(--prio-alta)" },
+    { id: "media", nome: "Importante", cor: "var(--prio-media)" },
+    { id: "baixa", nome: "Necessária", cor: "var(--prio-baixa)" }
+  ];
+  const REPETICOES = [["nao","Uma vez só"],["todos","Todos os dias"],["dias","Em dias escolhidos"],["vezes","X vezes por semana"]];
+  const PERIODOS = [["sessao","vez"],["dia","dia"],["semana","semana"],["mes","mês"]];
+  const DIAS_CURTOS = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+
   // db   = { quadros:[{id,nome,colunas:[{id,nome,cards:[card]}]}], atual:id }
   // card = { id, titulo, desc, feito, checklist:[{id,txt,ok}], agenda, google }
   // agenda = { data:"YYYY-MM-DD"|null, hora:"HH:MM"|null, duracaoMin, fuso, lembreteMin:null|min }
@@ -38,6 +50,8 @@
 
   function agendaPadrao(){ return { data: null, hora: null, duracaoMin: 60, fuso: FUSO, lembreteMin: null }; }
   function googlePadrao(){ return { eventId: null, calendarId: null, sincronizadoEm: null, hash: null }; }
+  function repetePadrao(){ return { modo: "nao", dias: [1, 2, 3, 4, 5], vezes: 3 }; }
+  function metaPadrao(){ return { alvo: null, unidade: "", periodo: "sessao" }; }
 
   // Cards antigos tinham só `prazo` (uma data). Vira agenda.data.
   function migraCard(k){
@@ -47,6 +61,9 @@
     delete k.prazo;
     if (!k.google) k.google = googlePadrao();
     if (!Array.isArray(k.checklist)) k.checklist = [];
+    if (!k.prioridade) k.prioridade = "media";
+    if (!k.repete) k.repete = repetePadrao();
+    if (!k.meta) k.meta = metaPadrao();
     return k;
   }
   function quadroPadrao(nome){
@@ -204,6 +221,16 @@
     return colEl;
   }
 
+  function rotuloRepeticao(card){
+    const r = card.repete;
+    if (!r || r.modo === "nao") return "";
+    if (r.modo === "todos") return "todo dia";
+    if (r.modo === "vezes") return r.vezes + "x/sem";
+    if (!r.dias || !r.dias.length) return "";
+    if (r.dias.length === 7) return "todo dia";
+    return r.dias.slice().sort().map(d => DIAS_CURTOS[d].toLowerCase()).join("·");
+  }
+
   function cardEl(card){
     const check = el("button", {
       class: "kcheck", title: "Concluída", "aria-label": "Marcar como concluída",
@@ -229,12 +256,20 @@
         html: svg('<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>', 11) + "<span>" + ok + "/" + chk.length + "</span>"
       }));
     }
+    const rep = rotuloRepeticao(card);
+    if (rep) badges.push(el("span", { class: "kbadge", html: svg('<path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 01-4 4H3"/>', 11) + "<span>" + rep + "</span>" }));
+    if (card.meta && card.meta.alvo != null) {
+      const per = (PERIODOS.find(p => p[0] === card.meta.periodo) || PERIODOS[0])[1];
+      badges.push(el("span", { class: "kbadge", html: svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>', 11) +
+        "<span>" + card.meta.alvo + (card.meta.unidade ? " " + card.meta.unidade : "") + "/" + per + "</span>" }));
+    }
     if (card.desc) badges.push(el("span", { class: "kbadge", html: svg('<path d="M4 6h16M4 12h16M4 18h10"/>', 11) }));
 
     const filhos = [topo];
     if (badges.length) filhos.push(el("div", { class: "kbadges" }, badges));
 
-    const node = el("div", { class: "kcard" + (card.feito ? " feito" : "") }, filhos);
+    const prio = PRIORIDADES.find(p => p.id === card.prioridade) || PRIORIDADES[1];
+    const node = el("div", { class: "kcard" + (card.feito ? " feito" : ""), style: "--cor-prio:" + prio.cor }, filhos);
     node.dataset.id = card.id;
     node.addEventListener("pointerdown", (e) => {
       if (e.target.closest("button")) return;
@@ -275,7 +310,9 @@
   function criarCard(col, titulo, campo){
     const v = (titulo || "").trim();
     if (!v) return;
-    col.cards.push({ id: uid(), titulo: v, desc: "", feito: false, checklist: [], agenda: agendaPadrao(), google: googlePadrao() });
+    col.cards.push({ id: uid(), titulo: v, desc: "", feito: false, checklist: [],
+      agenda: agendaPadrao(), google: googlePadrao(),
+      prioridade: "media", repete: repetePadrao(), meta: metaPadrao() });
     salvar();
     if (campo) campo.value = "";
     render();                        // composer segue aberto na mesma coluna
@@ -364,6 +401,19 @@
     selCol.innerHTML = "";
     for (const c of quadro().colunas) selCol.appendChild(el("option", { value: c.id, texto: c.nome }));
     selCol.value = achado.col.id;
+
+    rascunho.prioridade = rascunho.prioridade || "media";
+    rascunho.repete = rascunho.repete || repetePadrao();
+    rascunho.meta = rascunho.meta || metaPadrao();
+    renderPrioridade();
+    opcoes($("#mRepete"), REPETICOES, rascunho.repete.modo);
+    $("#mVezes").value = rascunho.repete.vezes || 3;
+    renderDias();
+    ajustaRepeticao();
+    $("#mMetaAlvo").value = rascunho.meta.alvo == null ? "" : rascunho.meta.alvo;
+    $("#mMetaUnidade").value = rascunho.meta.unidade || "";
+    opcoes($("#mMetaPeriodo"), PERIODOS.map(p => [p[0], "por " + p[1]]), rascunho.meta.periodo);
+
     pintaFeito();
     renderChecklist();
     modal.showModal();
@@ -432,7 +482,14 @@
       desc: $("#mDesc").value.trim(),
       feito: rascunho.feito,
       checklist: rascunho.checklist,
-      agenda: leAgenda()
+      agenda: leAgenda(),
+      prioridade: rascunho.prioridade,
+      repete: leRepeticao(),
+      meta: {
+        alvo: parseNumero($("#mMetaAlvo").value),
+        unidade: $("#mMetaUnidade").value.trim(),
+        periodo: $("#mMetaPeriodo").value
+      }
     });
     // guarda a assinatura do que vira evento; a sincronização futura compara com esta
     achado.card.google = achado.card.google || googlePadrao();
@@ -476,6 +533,58 @@
   }
   $("#mData").addEventListener("change", ajustaCamposHora);
   $("#mHora").addEventListener("change", ajustaCamposHora);
+
+  function parseNumero(txt){
+    let t = String(txt || "").replace(/[^\d,.-]/g, "").trim();
+    if (!t) return null;
+    if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+    const n = parseFloat(t);
+    return isNaN(n) ? null : n;
+  }
+
+  function renderPrioridade(){
+    const box = $("#mPrioridade");
+    box.innerHTML = "";
+    for (const p of PRIORIDADES) {
+      box.appendChild(el("button", {
+        type: "button", style: "--c:" + p.cor, "aria-pressed": String(rascunho.prioridade === p.id),
+        html: '<span class="bolinha"></span>' + p.nome,
+        onclick: () => { rascunho.prioridade = p.id; renderPrioridade(); }
+      }));
+    }
+  }
+
+  function renderDias(){
+    const box = $("#mDias");
+    box.innerHTML = "";
+    for (let d = 0; d < 7; d++) {
+      box.appendChild(el("button", {
+        type: "button", texto: DIAS_CURTOS[d], "aria-pressed": String(rascunho.repete.dias.includes(d)),
+        onclick: () => {
+          const i = rascunho.repete.dias.indexOf(d);
+          if (i >= 0) rascunho.repete.dias.splice(i, 1); else rascunho.repete.dias.push(d);
+          renderDias();
+        }
+      }));
+    }
+  }
+
+  // "Todos os dias" e "X vezes" não precisam da escolha manual de dias.
+  function ajustaRepeticao(){
+    const modo = $("#mRepete").value;
+    $("#blocoDias").classList.toggle("oculto", modo !== "dias");
+    $("#blocoVezes").classList.toggle("oculto", modo !== "vezes");
+  }
+  $("#mRepete").addEventListener("change", ajustaRepeticao);
+
+  function leRepeticao(){
+    const modo = $("#mRepete").value;
+    return {
+      modo,
+      dias: modo === "todos" ? [0, 1, 2, 3, 4, 5, 6] : rascunho.repete.dias.slice().sort(),
+      vezes: Math.max(1, Math.min(7, parseInt($("#mVezes").value, 10) || 3))
+    };
+  }
 
   // Assinatura dos campos que viram evento — se mudar, o evento está velho.
   function assinatura(card){
@@ -534,6 +643,46 @@
   });
 
   window.App.eventoGoogle = eventoGoogle;   // ponto de entrada da sincronização futura
+
+  // API usada pela aba Semana: ela precisa enxergar os cards de todos os quadros.
+  window.App.PRIORIDADES = PRIORIDADES;
+  window.App.DIAS_CURTOS = DIAS_CURTOS;
+  window.App.quadros = {
+    lista(){ return db.quadros.map(q => ({ id: q.id, nome: q.nome })); },
+    cards(quadroId){
+      const alvos = quadroId && quadroId !== "todos" ? db.quadros.filter(q => q.id === quadroId) : db.quadros;
+      const saida = [];
+      for (const q of alvos)
+        for (const c of q.colunas)
+          for (const k of c.cards) saida.push({ card: k, quadroId: q.id, quadroNome: q.nome, colunaNome: c.nome });
+      return saida;
+    },
+    achar(cardId){
+      for (const q of db.quadros)
+        for (const c of q.colunas) {
+          const k = c.cards.find(x => x.id === cardId);
+          if (k) return { card: k, quadroId: q.id, quadroNome: q.nome, colunaNome: c.nome };
+        }
+      return null;
+    },
+    atualizar(cardId, mudancas){
+      const achado = this.achar(cardId);
+      if (!achado) return false;
+      Object.assign(achado.card, mudancas);
+      salvar(); render();
+      return true;
+    },
+    // abre o card no modal dos quadros, trocando de quadro se ele estiver em outro
+    abrir(cardId){
+      const achado = this.achar(cardId);
+      if (!achado) return false;
+      if (db.atual !== achado.quadroId) { db.atual = achado.quadroId; salvar(); render(); }
+      window.App.abrirAba("quadros");
+      abrirModal(cardId);
+      return true;
+    },
+    rotuloRepeticao
+  };
 
   // ── Barra do quadro ─────────────────────────────────────────────────
   $("#selQuadro").addEventListener("change", (e) => { db.atual = e.target.value; salvar(); busca = ""; $("#buscaCard").value = ""; render(); });

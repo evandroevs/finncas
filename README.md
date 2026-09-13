@@ -1,7 +1,8 @@
-# Painel — Contas, Atividades e Metas
+# Painel — Contas, Atividades, Semana e Metas
 
-Três abas, sem build e sem dependências: **Contas** (checklist de contas por mês),
-**Atividades** (quadros estilo Trello, um por empresa) e **Metas** (o mapa do projeto de vida,
+Quatro abas, sem build e sem dependências: **Contas** (checklist de contas por mês),
+**Atividades** (quadros estilo Trello, um por empresa), **Semana** (o calendário hora a hora,
+que se preenche sozinho a partir dos cards) e **Metas** (o mapa do projeto de vida,
 com revisão mensal).
 
 ## Como usar
@@ -31,6 +32,7 @@ assets/app.css    paleta e estilos
 assets/base.js    utilidades: abas, backup, motor de arrastar
 assets/contas.js  aba Contas
 assets/quadros.js aba Atividades (kanban)
+assets/semana.js  aba Semana (calendário + planejador)
 assets/metas.js   aba Metas (mapa de horizontes + revisão)
 ```
 
@@ -64,6 +66,13 @@ assets/metas.js   aba Metas (mapa de horizontes + revisão)
   - excluir.
   O quadradinho no card marca como concluída sem abrir nada. O card mostra `25 ago · 14:30`,
   amarelo no dia e vermelho quando passa da hora.
+- **Prioridade** — vermelho (máxima, é o que gera resultado e sai primeiro), amarelo
+  (importante, mas negociável) e verde (necessária e maleável, mas tem que sair). A cor vira a
+  borda do card e a cor do bloco no calendário, e é ela que define a ordem do planejador.
+- **Frequência** — uma vez só, todos os dias, em dias escolhidos (seg·qua·sex) ou X vezes por
+  semana. É o que faz uma atividade diária, tipo ler, aparecer sozinha em todos os dias.
+- **Meta da atividade** — por exemplo `20 páginas por dia` ou `20 ligações por semana`.
+  Aparece no card e dentro do bloco no calendário.
 - **Google Agenda** — o botão no detalhe do card abre o Google Agenda já preenchido
   (título, dia, hora, duração e a descrição com o checklist). Funciona sem login e sem API.
 - **Arrastar** — com mouse, arraste o card direto. No celular, **segure** o card por um instante
@@ -101,6 +110,45 @@ Para ligar de verdade, o que falta é: um projeto no Google Cloud com a Calendar
 OAuth com o escopo `https://www.googleapis.com/auth/calendar.events`, e guardar o refresh token
 fora do navegador (uma edge function do Supabase, como já é feito com o Google Ads).
 
+## Aba Semana
+
+Calendário da semana, hora a hora, com todos os quadros juntos (ou um só, pelo filtro).
+Arraste um bloco para mudar de dia ou de horário; clique num espaço vazio para marcar algo
+na mão; clique num bloco para editar. No celular a grade rola para o lado.
+
+### O planejador
+
+O botão **Montar a semana** preenche a grade a partir dos cards. Não é um modelo de
+linguagem: é um algoritmo que roda no navegador, sem API e sem custo — por isso é instantâneo,
+funciona offline e sempre explica o que fez.
+
+Como ele decide:
+
+1. **Levanta a demanda** — cada card não concluído vira uma ou várias sessões na semana,
+   conforme a recorrência (uma vez só, todo dia, dias escolhidos ou X vezes por semana).
+   `3x por semana` é espalhado (seg/qua/sex), não empilhado no começo.
+2. **Ordena** — vermelho antes de amarelo antes de verde; dentro da mesma cor, prazo mais
+   perto primeiro; quem já tem dia definido entra antes de quem está solto.
+3. **Encaixa** — cada sessão vai para o primeiro buraco livre do dia, dentro da janela de
+   trabalho. Como o vermelho é processado primeiro, ele fica com as primeiras horas do dia.
+   Tarefa solta de prioridade máxima vai para o dia mais próximo; as outras vão para o dia
+   mais vazio, para não entupir a segunda-feira.
+
+Ele nunca agenda no passado (nem em horário que já passou hoje), respeita o que já está na
+grade, e rodar de novo não duplica nada — só acrescenta o que falta. No fim, mostra o que
+entrou, onde, e **o que não coube com o motivo** (dia cheio, expediente encerrado, semana sem
+espaço). Tem **Desfazer** para a última montagem.
+
+Em **Horários** você define a janela do dia, os dias em que trabalha, a duração padrão e um
+respiro entre blocos. Ali também dá para limpar só o que foi montado automaticamente — o que
+você marcou ou arrastou na mão fica.
+
+### Duas origens de bloco
+
+- **Planejado** — criado pelo planejador ou por você na grade; mora na aba Semana.
+- **Marcado no card** (borda tracejada) — o card já tinha dia e hora; ele continua morando no
+  card, e mover ou editar pela grade altera o card.
+
 ## Aba Metas
 
 O mapa vai do horizonte mais longo ao mais curto: **10 anos · 5 anos · 3 anos · 1 ano ·
@@ -137,9 +185,10 @@ campos vêm em branco, mostrando só o que foi de fato registrado na época.
 
 ## Onde ficam os dados
 
-No `localStorage` do navegador — `financas.v1` (contas), `quadros.v1` (atividades) e `metas.v1`
-(metas e revisões) — neste computador/navegador. Não sincroniza entre dispositivos: use
-**Exportar backup** / **Importar backup**, que geram um `.json` único com as três abas.
-Backups antigos, de versões com menos abas, continuam sendo aceitos.
+No `localStorage` do navegador — `financas.v1` (contas), `quadros.v1` (atividades),
+`agenda.v1` (semana) e `metas.v1` (metas e revisões) — neste computador/navegador. Não
+sincroniza entre dispositivos: use **Exportar backup** / **Importar backup**, que geram um
+`.json` único com as quatro abas. Backups antigos, de versões com menos abas, continuam
+sendo aceitos.
 
 Para acessar do celular e do computador com os mesmos dados, seria preciso ligar num banco (ex: Supabase).

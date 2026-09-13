@@ -25,6 +25,7 @@
       <nav class="tabs" id="tabs" role="tablist">
         <button role="tab" data-tab="contas" aria-selected="true">Contas</button>
         <button role="tab" data-tab="quadros" aria-selected="false">Atividades</button>
+        <button role="tab" data-tab="semana" aria-selected="false">Semana</button>
         <button role="tab" data-tab="metas" aria-selected="false">Metas</button>
       </nav>
       <button id="btnTema" aria-label="Alternar tema"></button>
@@ -112,6 +113,122 @@
   <div class="metas-resumo" id="metasResumo"></div>
   <div class="mapa" id="mapa"></div>
 </section>
+
+<!-- ══════════════════ ABA SEMANA ══════════════════ -->
+<section id="tab-semana" role="tabpanel" class="oculto">
+  <div class="semana-bar">
+    <div class="semana-nav">
+      <button class="arrow" id="semPrev" title="Semana anterior" aria-label="Semana anterior">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span id="semanaLabel"></span>
+      <button class="arrow" id="semNext" title="Próxima semana" aria-label="Próxima semana">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+    <button class="btn ghost sm" id="semHoje">Hoje</button>
+    <button class="btn sm" id="btnMontar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3.2"/></svg><span class="rotulo">Montar a semana</span>
+    </button>
+    <select class="sel-quadro" id="semQuadro" aria-label="Quadro"></select>
+    <span class="espaco"></span>
+    <div class="semana-legenda">
+      <span><i style="background:var(--prio-alta)"></i>máxima</span>
+      <span><i style="background:var(--prio-media)"></i>importante</span>
+      <span><i style="background:var(--prio-baixa)"></i>necessária</span>
+    </div>
+    <button class="btn ghost sm" id="btnPrefs" title="Horários da semana" aria-label="Horários da semana">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 007 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003 15a2 2 0 110-4 1.6 1.6 0 001.1-2.7l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 009 5V4.6a2 2 0 114 0V5a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1A1.6 1.6 0 0021 11a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span class="rotulo">Horários</span>
+    </button>
+  </div>
+  <div class="grade-scroll"><div class="grade" id="grade"></div></div>
+</section>
+
+<!-- Modal de bloco da agenda -->
+<dialog id="modalBloco">
+  <div class="modal-head">
+    <button type="button" class="kcheck" id="bFeito" title="Concluída" aria-label="Marcar como concluída">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+    </button>
+    <input type="text" id="bTitulo" placeholder="O que você vai fazer" />
+    <button type="button" class="icon" id="bFechar" title="Fechar" aria-label="Fechar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div id="bOrigem" class="vazio-inline"></div>
+    <div class="campo-linha tres">
+      <div class="campo"><label for="bData">Dia</label><input type="date" id="bData" /></div>
+      <div class="campo"><label for="bHora">Hora</label><input type="time" id="bHora" /></div>
+      <div class="campo"><label for="bDuracao">Duração</label><select id="bDuracao"></select></div>
+    </div>
+    <div class="campo">
+      <label>Prioridade</label>
+      <div class="prio-botoes" id="bPrioridade"></div>
+    </div>
+    <div class="campo">
+      <label for="bNota">Anotação</label>
+      <input type="text" id="bNota" placeholder="Detalhe rápido deste bloco" />
+    </div>
+  </div>
+  <div class="modal-pe">
+    <button type="button" class="btn perigo sm" id="bExcluir">Tirar da semana</button>
+    <button type="button" class="btn ghost sm oculto" id="bAbrirCard">Abrir card</button>
+    <span class="espaco"></span>
+    <button type="button" class="btn ghost sm" id="bCancelar">Cancelar</button>
+    <button type="button" class="btn sm" id="bSalvar">Salvar</button>
+  </div>
+</dialog>
+
+<!-- Modal de horários da semana -->
+<dialog id="modalPrefs">
+  <div class="modal-head">
+    <div style="flex:1;font-weight:700;font-size:16px">Horários da semana</div>
+    <button type="button" class="icon" id="pFechar" title="Fechar" aria-label="Fechar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="vazio-inline">É dentro desta janela que o planejador encaixa as tarefas. Fora dela você ainda pode marcar coisas na mão.</div>
+    <div class="campo-linha">
+      <div class="campo"><label for="pInicio">Começo do dia</label><input type="time" id="pInicio" /></div>
+      <div class="campo"><label for="pFim">Fim do dia</label><input type="time" id="pFim" /></div>
+    </div>
+    <div class="campo">
+      <label>Dias em que você trabalha</label>
+      <div class="dias-botoes" id="pDias"></div>
+    </div>
+    <div class="campo-linha">
+      <div class="campo"><label for="pDuracao">Duração padrão de uma tarefa</label><select id="pDuracao"></select></div>
+      <div class="campo"><label for="pIntervalo">Respiro entre blocos</label><select id="pIntervalo"></select></div>
+    </div>
+  </div>
+  <div class="modal-pe">
+    <button type="button" class="btn perigo sm" id="pLimpar">Limpar o que foi montado</button>
+    <span class="espaco"></span>
+    <button type="button" class="btn ghost sm" id="pCancelar">Cancelar</button>
+    <button type="button" class="btn sm" id="pSalvar">Salvar</button>
+  </div>
+</dialog>
+
+<!-- Resultado do planejamento -->
+<dialog id="modalPlano">
+  <div class="modal-head">
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:16px" id="plTitulo">Semana montada</div>
+      <div style="font-size:12.5px;color:var(--txt-3)" id="plSub"></div>
+    </div>
+    <button type="button" class="icon" id="plFechar" title="Fechar" aria-label="Fechar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="modal-body" id="plCorpo"></div>
+  <div class="modal-pe">
+    <button type="button" class="btn perigo sm" id="plDesfazer">Desfazer</button>
+    <span class="espaco"></span>
+    <button type="button" class="btn sm" id="plOk">Fechar</button>
+  </div>
+</dialog>
 
 <!-- Modal de meta -->
 <dialog id="modalMeta">
@@ -225,6 +342,23 @@
         <div class="campo"><label for="mColuna">Coluna</label><select id="mColuna"></select></div>
       </div>
       <div class="campo">
+        <label>Prioridade</label>
+        <div class="prio-botoes" id="mPrioridade"></div>
+      </div>
+      <div class="campo-linha">
+        <div class="campo"><label for="mRepete">Com que frequência</label><select id="mRepete"></select></div>
+        <div class="campo" id="blocoVezes"><label for="mVezes">Vezes por semana</label><input type="number" id="mVezes" min="1" max="7" /></div>
+      </div>
+      <div class="campo" id="blocoDias">
+        <label>Em quais dias</label>
+        <div class="dias-botoes" id="mDias"></div>
+      </div>
+      <div class="campo-linha tres">
+        <div class="campo"><label for="mMetaAlvo">Meta da atividade</label><input type="text" id="mMetaAlvo" inputmode="decimal" placeholder="20" /></div>
+        <div class="campo"><label for="mMetaUnidade">Unidade</label><input type="text" id="mMetaUnidade" placeholder="páginas, ligações…" /></div>
+        <div class="campo"><label for="mMetaPeriodo">Por</label><select id="mMetaPeriodo"></select></div>
+      </div>
+      <div class="campo">
         <label>Checklist <span id="mChkResumo" style="text-transform:none;letter-spacing:0"></span></label>
         <div class="chk-barra" id="mChkBarra"><i style="width:0%"></i></div>
         <ul class="chk-lista" id="mChkLista"></ul>
@@ -252,6 +386,7 @@
 <script src="assets/base.js"></script>
 <script src="assets/contas.js"></script>
 <script src="assets/quadros.js"></script>
+<script src="assets/semana.js"></script>
 <script src="assets/metas.js"></script>
 </body>
 </html>

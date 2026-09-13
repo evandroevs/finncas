@@ -82,10 +82,10 @@
   });
 
   // ── Backup (contas + quadros no mesmo arquivo) ──────────────────────
-  const CHAVES = { contas: "financas.v1", quadros: "quadros.v1", metas: "metas.v1" };
+  const CHAVES = { contas: "financas.v1", quadros: "quadros.v1", metas: "metas.v1", agenda: "agenda.v1" };
 
   function exportar(){
-    const dados = { versao: 3, contas: ler(CHAVES.contas, null), quadros: ler(CHAVES.quadros, null), metas: ler(CHAVES.metas, null) };
+    const dados = { versao: 4, contas: ler(CHAVES.contas, null), quadros: ler(CHAVES.quadros, null), metas: ler(CHAVES.metas, null), agenda: ler(CHAVES.agenda, null) };
     const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     const d = new Date();
@@ -105,15 +105,17 @@
     const contas  = ehAntigo ? d : d.contas;
     const quadros = ehAntigo ? null : d.quadros;
     const metas   = ehAntigo ? null : d.metas;
-    if (!contas && !quadros && !metas) { toast("Arquivo inválido."); return; }
+    const agenda  = ehAntigo ? null : d.agenda;
+    if (!contas && !quadros && !metas && !agenda) { toast("Arquivo inválido."); return; }
 
-    const partes = [contas && "contas", quadros && "quadros", metas && "metas"].filter(Boolean);
+    const partes = [contas && "contas", quadros && "quadros", metas && "metas", agenda && "semana"].filter(Boolean);
     const oque = partes.length > 1 ? partes.slice(0, -1).join(", ") + " e " + partes[partes.length - 1] : partes[0];
     if (!confirm("Isso substitui " + oque + " deste navegador. Continuar?")) return;
 
     if (contas)  gravar(CHAVES.contas, contas);
     if (quadros) gravar(CHAVES.quadros, quadros);
     if (metas)   gravar(CHAVES.metas, metas);
+    if (agenda)  gravar(CHAVES.agenda, agenda);
     document.dispatchEvent(new CustomEvent("dados:importados"));
     toast("Backup importado.");
   }
