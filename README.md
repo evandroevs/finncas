@@ -5,6 +5,12 @@ Quatro abas, sem build e sem dependências: **Contas** (checklist de contas por 
 que se preenche sozinho a partir dos cards) e **Metas** (o mapa do projeto de vida,
 com revisão mensal).
 
+## Depois de atualizar
+
+Os arquivos de `assets/` são versionados no `index.html` (`?v=6`). Ao mexer neles, **suba o
+número da versão** — sem isso o navegador continua rodando a cópia antiga em cache e a
+mudança não aparece.
+
 ## Como usar
 
 ```bash
@@ -119,7 +125,10 @@ na mão; clique num bloco para editar. No celular a grade rola para o lado.
 ### O card entra na agenda sozinho
 
 Criou um card na aba Atividades, ele já cai na grade — no primeiro horário livre a partir de
-agora, dentro da janela de trabalho. Aparece tanto no calendário do projeto quanto no de
+agora, dentro da janela de trabalho. Se esse horário estiver em outra semana (acontece no fim
+de semana, quando tudo vai para a segunda), **a grade pula para a semana do card** e o aviso
+diz a data. Ao abrir o app, se a semana corrente estiver vazia e a seguinte tiver
+compromissos, ele já abre na seguinte. Aparece tanto no calendário do projeto quanto no de
 **Todos os quadros**. Um card recorrente entra nos próximos 7 dias; para as semanas seguintes,
 use **Montar a semana**.
 

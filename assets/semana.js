@@ -554,11 +554,24 @@
     return criados;
   }
 
+  // Se o card caiu em outra semana (típico no fim de semana: tudo vai para
+  // segunda, que já é a semana seguinte), a grade vai junto — senão parece
+  // que não aconteceu nada.
+  function focaSemanaDe(dataIso){
+    const alvo = inicioSemana(daIso(dataIso));
+    if (iso(alvo) === iso(segunda)) return false;
+    segunda = alvo;
+    return true;
+  }
+
   function avisaAgendado(criados){
     if (!criados.length) return;
-    if (criados.length > 1) { toast("Entrou na agenda em " + criados.length + " dias."); return; }
-    const b = criados[0], d = daIso(b.data);
-    toast("Entrou na agenda: " + DIAS[d.getDay()].toLowerCase() + " " + d.getDate() + ", " + b.hora + ".");
+    const cedo = criados.slice().sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora))[0];
+    const mudou = focaSemanaDe(cedo.data);
+    const d = daIso(cedo.data);
+    const quando = DIAS[d.getDay()].toLowerCase() + " " + d.getDate() + "/" + String(d.getMonth() + 1).padStart(2, "0");
+    if (criados.length > 1) toast("Entrou na agenda em " + criados.length + " dias, a partir de " + quando + ".");
+    else toast("Entrou na agenda: " + quando + " às " + cedo.hora + (mudou ? " — outra semana, já mudei a grade." : "."));
   }
 
   // Chamados pela aba Atividades sempre que um card nasce, muda ou some.
@@ -566,7 +579,7 @@
     conflito,
     aoCriarCard(card, quadroId){
       const criados = agendarCard(card, quadroId);
-      if (criados.length) { salvar(); render(); avisaAgendado(criados); }
+      if (criados.length) { salvar(); avisaAgendado(criados); render(); }
       else if (!card.feito) toast("Sem espaço livre na agenda — ajuste os horários ou a semana.");
     },
     aoSalvarCard(card, quadroId){
@@ -592,9 +605,10 @@
         }
       }
       const novos = agendarCard(card, quadroId);
-      salvar(); render();
+      salvar();
       if (duracaoPresa) toast("A duração maior não coube: o bloco ficou com o horário antigo.");
       else avisaAgendado(novos);
+      render();
     },
     aoExcluirCard(cardId){
       const hojeIso = iso(hoje());
@@ -806,8 +820,18 @@
   $("#semQuadro").addEventListener("change", (e) => { filtroQuadro = e.target.value; render(); });
   $("#btnMontar").addEventListener("click", montarSemana);
 
+  // No domingo à noite, a semana corrente já acabou: se ela está vazia e a
+  // próxima tem compromissos, é nela que faz sentido abrir.
+  function abreOndeTemCoisa(){
+    const temAlgo = (ini) => [0,1,2,3,4,5,6].some(i => itensDoDia(iso(addDias(ini, i)), true).length > 0);
+    if (temAlgo(segunda)) return;
+    const proxima = addDias(segunda, 7);
+    if (temAlgo(proxima)) segunda = proxima;
+  }
+
   document.addEventListener("dados:importados", () => { db = normaliza(ler(KEY, null)); render(); });
   document.addEventListener("aba:mudou", (e) => { if (e.detail === "semana") render(); });
 
+  abreOndeTemCoisa();
   render();
 })();
