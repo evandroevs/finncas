@@ -65,16 +65,18 @@
   // ── O que aparece na grade ──────────────────────────────────────────
   // Duas fontes: blocos guardados aqui e cards com dia+hora marcados nos
   // quadros (âncoras). A âncora continua morando no card — mexer nela mexe no card.
-  function itensDoDia(dataIso){
+  // `todos` ignora o filtro de quadro: para checar choque de horário e para o
+  // planejador, o que vale é a agenda inteira, não só o quadro que está na tela.
+  function itensDoDia(dataIso, todos){
     const out = db.blocos
       .filter(b => b.data === dataIso)
-      .filter(b => filtroQuadro === "todos" || !b.cardId || b.quadroId === filtroQuadro)
+      .filter(b => todos || filtroQuadro === "todos" || !b.cardId || b.quadroId === filtroQuadro)
       .map(b => ({
         id: b.id, tipo: "bloco", titulo: b.titulo, hora: b.hora, duracaoMin: b.duracaoMin,
         prioridade: b.prioridade, feito: b.feito, cardId: b.cardId, nota: b.nota, ref: b
       }));
 
-    for (const { card, quadroId } of cardsVisiveis()) {
+    for (const { card, quadroId } of (todos ? todosOsCards() : cardsVisiveis())) {
       const ag = card.agenda || {};
       if (ag.data !== dataIso || !ag.hora) continue;
       if (out.some(x => x.cardId === card.id)) continue;   // já tem bloco próprio nesse dia
@@ -89,8 +91,11 @@
 
   function cardsVisiveis(){
     const api = window.App.quadros;
-    if (!api) return [];
-    return api.cards(filtroQuadro);
+    return api ? api.cards(filtroQuadro) : [];
+  }
+  function todosOsCards(){
+    const api = window.App.quadros;
+    return api ? api.cards("todos") : [];
   }
   function metaDoCard(card){
     if (!card.meta || card.meta.alvo == null) return "";
@@ -268,6 +273,12 @@
 
   // Mover uma âncora mexe no card; mover um bloco mexe no bloco.
   function mover(it, data, hora){
+    const c = conflito(data, hora, it.duracaoMin, {
+      ignoraCardId: it.cardId,
+      ignoraBlocoId: it.tipo === "bloco" ? it.id : null
+    });
+    if (c) { avisaConflito(c); render(); return; }   // volta para onde estava
+
     if (it.tipo === "ancora") {
       const api = window.App.quadros, achado = api && api.achar(it.cardId);
       if (achado) {
@@ -300,7 +311,13 @@
     emEdicao = it || null;
     novoPadrao = padrao || null;
 
-    const dur = it ? it.duracaoMin : db.prefs.duracaoPadrao;
+    let dur = it ? it.duracaoMin : db.prefs.duracaoPadrao;
+    if (!it) {
+      // não adianta oferecer 2h se só há 30 min até o próximo compromisso
+      const livre = espacoLivre(padrao.data, padrao.hora);
+      const cabem = DURACOES.map(d => d[0]).filter(m => m <= Math.min(db.prefs.duracaoPadrao, livre));
+      dur = cabem.length ? cabem[cabem.length - 1] : DURACOES[0][0];
+    }
     $("#bTitulo").value = it ? it.titulo : "";
     $("#bData").value = it ? dataDoItem(it) : padrao.data;
     $("#bHora").value = it ? it.hora : padrao.hora;
@@ -351,7 +368,7 @@
   $("#bAbrirCard").addEventListener("click", () => {
     const id = emEdicao && emEdicao.cardId;
     modal.close();
-    if (id && window.App.quadros) window.App.quadros.abrir(id);
+    if (id && window.App.quadros && !window.App.quadros.abrir(id)) toast("Esse card não existe mais.");
   });
   $("#bExcluir").addEventListener("click", () => {
     if (!emEdicao) return modal.close();
@@ -370,6 +387,12 @@
     const data = $("#bData").value, hora = $("#bHora").value;
     if (!data || !hora) { toast("Dia e hora são obrigatórios."); return; }
     const duracaoMin = parseInt($("#bDuracao").value, 10) || 60;
+
+    const c = conflito(data, hora, duracaoMin, {
+      ignoraCardId: emEdicao ? emEdicao.cardId : null,
+      ignoraBlocoId: emEdicao && emEdicao.tipo === "bloco" ? emEdicao.id : null
+    });
+    if (c) { avisaConflito(c); return; }
 
     if (emEdicao && emEdicao.tipo === "ancora") {
       const api = window.App.quadros, achado = api.achar(emEdicao.cardId);
@@ -444,6 +467,142 @@
     salvar(); modalPrefs.close(); render();
   });
 
+  // ══ CHOQUE DE HORÁRIO ═════════════════════════════════════════════
+  // Nada entra em cima de nada: o mesmo teste vale para o arrasto, para o
+  // que você marca na mão, para o horário posto no card e para o planejador.
+  function ocupacaoDoDia(dataIso, ignoraCardId, ignoraBlocoId){
+    return itensDoDia(dataIso, true)
+      .filter(i => !i.feito)                                   // o que já foi feito libera o horário
+      .filter(i => !(ignoraCardId && i.cardId === ignoraCardId))
+      .filter(i => !(ignoraBlocoId && i.id === ignoraBlocoId))
+      .map(i => ({ ini: min(i.hora), fim: min(i.hora) + i.duracaoMin, titulo: i.titulo }));
+  }
+
+  function conflito(dataIso, hora, dur, ops){
+    const ini = min(hora), fim = ini + dur;
+    const o = ops || {};
+    return ocupacaoDoDia(dataIso, o.ignoraCardId, o.ignoraBlocoId)
+      .find(x => ini < x.fim && fim > x.ini) || null;
+  }
+  function avisaConflito(c){
+    toast("Já tem “" + c.titulo + "” das " + hhmm(c.ini) + " às " + hhmm(c.fim) + ".");
+  }
+
+  // Quantos minutos livres existem a partir daquele ponto do dia.
+  function espacoLivre(dataIso, hora, ignoraCardId){
+    const t = min(hora);
+    let limite = min(db.prefs.fim);
+    for (const o of ocupacaoDoDia(dataIso, ignoraCardId)) if (o.ini >= t) limite = Math.min(limite, o.ini);
+    return Math.max(0, limite - t);
+  }
+
+  // ══ O CARD ENTRA NA AGENDA SOZINHO ════════════════════════════════
+  function novoBlocoDeCard(card, quadroId, dataIso, hora, dur){
+    const b = {
+      id: uid(), titulo: card.titulo, data: dataIso, hora, duracaoMin: dur,
+      prioridade: card.prioridade || "media", cardId: card.id, quadroId,
+      nota: metaDoCard(card), feito: false, auto: true
+    };
+    db.blocos.push(b);
+    return b;
+  }
+
+  // Primeiro buraco livre a partir de hoje, olhando até duas semanas à frente.
+  function proximoEspaco(dur, ignoraCardId){
+    const ini = min(db.prefs.inicio), fim = min(db.prefs.fim), hojeIso = iso(hoje());
+    for (let i = 0; i < 14; i++) {
+      const d = addDias(hoje(), i);
+      if (!db.prefs.dias.includes(d.getDay())) continue;
+      const dIso = iso(d);
+      const t = encaixe(ocupacaoDoDia(dIso, ignoraCardId), ini, fim, dur, pisoDoDia(dIso, ini, hojeIso));
+      if (t != null) return { data: dIso, hora: hhmm(t) };
+    }
+    return null;
+  }
+
+  function agendarCard(card, quadroId){
+    if (card.feito) return [];
+    const ag = card.agenda || {};
+    if (ag.data && ag.hora) return [];            // já tem hora marcada no card: aparece como âncora
+    const dur = ag.duracaoMin || db.prefs.duracaoPadrao;
+    const rep = card.repete || { modo: "nao" };
+    const ini = min(db.prefs.inicio), fim = min(db.prefs.fim), hojeIso = iso(hoje());
+    const criados = [];
+
+    if (rep.modo !== "nao") {
+      const proximos = [];
+      for (let i = 0; i < 7; i++) proximos.push(addDias(hoje(), i));
+      for (const dIso of diasAlvo(rep, proximos)) {
+        if (dIso < hojeIso) continue;
+        if (db.blocos.some(b => b.cardId === card.id && b.data === dIso)) continue;
+        const t = encaixe(ocupacaoDoDia(dIso, card.id), ini, fim, dur, pisoDoDia(dIso, ini, hojeIso));
+        if (t != null) criados.push(novoBlocoDeCard(card, quadroId, dIso, hhmm(t), dur));
+      }
+      return criados;
+    }
+
+    // uma vez só: se já tem bloco daqui para a frente, não cria outro
+    if (db.blocos.some(b => b.cardId === card.id && b.data >= hojeIso)) return [];
+
+    if (ag.data && ag.data >= hojeIso) {
+      const t = encaixe(ocupacaoDoDia(ag.data, card.id), ini, fim, dur, pisoDoDia(ag.data, ini, hojeIso));
+      if (t != null) criados.push(novoBlocoDeCard(card, quadroId, ag.data, hhmm(t), dur));
+      return criados;
+    }
+    const espaco = proximoEspaco(dur, card.id);
+    if (espaco) criados.push(novoBlocoDeCard(card, quadroId, espaco.data, espaco.hora, dur));
+    return criados;
+  }
+
+  function avisaAgendado(criados){
+    if (!criados.length) return;
+    if (criados.length > 1) { toast("Entrou na agenda em " + criados.length + " dias."); return; }
+    const b = criados[0], d = daIso(b.data);
+    toast("Entrou na agenda: " + DIAS[d.getDay()].toLowerCase() + " " + d.getDate() + ", " + b.hora + ".");
+  }
+
+  // Chamados pela aba Atividades sempre que um card nasce, muda ou some.
+  window.App.semana = {
+    conflito,
+    aoCriarCard(card, quadroId){
+      const criados = agendarCard(card, quadroId);
+      if (criados.length) { salvar(); render(); avisaAgendado(criados); }
+      else if (!card.feito) toast("Sem espaço livre na agenda — ajuste os horários ou a semana.");
+    },
+    aoSalvarCard(card, quadroId){
+      const hojeIso = iso(hoje());
+      const ag = card.agenda || {};
+
+      // ganhou hora marcada no card: os blocos automáticos saem para não duplicar
+      if (ag.data && ag.hora) {
+        db.blocos = db.blocos.filter(b => !(b.cardId === card.id && b.data >= hojeIso && b.auto));
+        salvar(); render(); return;
+      }
+
+      let duracaoPresa = false;
+      for (const b of db.blocos.filter(x => x.cardId === card.id && x.data >= hojeIso)) {
+        b.titulo = card.titulo;
+        b.prioridade = card.prioridade || "media";
+        b.feito = !!card.feito;
+        b.nota = metaDoCard(card);
+        const nova = ag.duracaoMin || b.duracaoMin;
+        if (nova !== b.duracaoMin) {
+          const cabe = nova < b.duracaoMin || !conflito(b.data, b.hora, nova, { ignoraBlocoId: b.id, ignoraCardId: card.id });
+          if (cabe) b.duracaoMin = nova; else duracaoPresa = true;
+        }
+      }
+      const novos = agendarCard(card, quadroId);
+      salvar(); render();
+      if (duracaoPresa) toast("A duração maior não coube: o bloco ficou com o horário antigo.");
+      else avisaAgendado(novos);
+    },
+    aoExcluirCard(cardId){
+      const hojeIso = iso(hoje());
+      db.blocos = db.blocos.filter(b => !(b.cardId === cardId && b.data >= hojeIso));
+      salvar(); render();
+    }
+  };
+
   // ══ O PLANEJADOR ══════════════════════════════════════════════════
   // 1. levanta a demanda (cada card vira uma ou várias sessões na semana)
   // 2. ordena por prioridade e por prazo
@@ -455,7 +614,7 @@
     const ocupacao = {};
     for (const d of dias) {
       const dIso = iso(d);
-      ocupacao[dIso] = itensDoDia(dIso).map(i => ({ ini: min(i.hora), fim: min(i.hora) + i.duracaoMin }));
+      ocupacao[dIso] = ocupacaoDoDia(dIso);
     }
 
     const demandas = [];

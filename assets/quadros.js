@@ -235,7 +235,12 @@
     const check = el("button", {
       class: "kcheck", title: "Concluída", "aria-label": "Marcar como concluída",
       html: '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
-      onclick: (e) => { e.stopPropagation(); card.feito = !card.feito; salvar(); render(); }
+      onclick: (e) => {
+        e.stopPropagation();
+        card.feito = !card.feito;
+        salvar(); render();
+        if (window.App.semana) window.App.semana.aoSalvarCard(card, db.atual);
+      }
     });
     const topo = el("div", { class: "kcard-topo" }, [check, el("div", { class: "ktitulo", texto: card.titulo })]);
 
@@ -310,10 +315,13 @@
   function criarCard(col, titulo, campo){
     const v = (titulo || "").trim();
     if (!v) return;
-    col.cards.push({ id: uid(), titulo: v, desc: "", feito: false, checklist: [],
+    const novo = { id: uid(), titulo: v, desc: "", feito: false, checklist: [],
       agenda: agendaPadrao(), google: googlePadrao(),
-      prioridade: "media", repete: repetePadrao(), meta: metaPadrao() });
+      prioridade: "media", repete: repetePadrao(), meta: metaPadrao() };
+    col.cards.push(novo);
     salvar();
+    // o card já nasce na agenda da semana
+    if (window.App.semana) window.App.semana.aoCriarCard(novo, quadro().id);
     if (campo) campo.value = "";
     render();                        // composer segue aberto na mesma coluna
   }
@@ -469,6 +477,7 @@
     if (!confirm('Excluir o card "' + achado.card.titulo + '"?')) return;
     achado.col.cards = achado.col.cards.filter(k => k.id !== cardIdAberto);
     salvar(); modal.close(); render();
+    if (window.App.semana) window.App.semana.aoExcluirCard(cardIdAberto);
   });
 
   function salvarModal(){
@@ -477,12 +486,18 @@
     const titulo = $("#mTitulo").value.trim();
     if (!titulo) { $("#mTitulo").focus(); return; }
 
+    const ag = leAgenda();
+    if (ag.data && ag.hora && window.App.semana) {
+      const c = window.App.semana.conflito(ag.data, ag.hora, ag.duracaoMin, { ignoraCardId: cardIdAberto });
+      if (c) { toast("Já tem “" + c.titulo + "” nesse horário."); return; }
+    }
+
     Object.assign(achado.card, {
       titulo,
       desc: $("#mDesc").value.trim(),
       feito: rascunho.feito,
       checklist: rascunho.checklist,
-      agenda: leAgenda(),
+      agenda: ag,
       prioridade: rascunho.prioridade,
       repete: leRepeticao(),
       meta: {
@@ -502,6 +517,7 @@
       if (destino) destino.cards.push(achado.card);
     }
     salvar(); modal.close(); render();
+    if (window.App.semana) window.App.semana.aoSalvarCard(achado.card, db.atual);
   }
 
   // ── Agenda do card ──────────────────────────────────────────────────

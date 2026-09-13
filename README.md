@@ -116,9 +116,34 @@ Calendário da semana, hora a hora, com todos os quadros juntos (ou um só, pelo
 Arraste um bloco para mudar de dia ou de horário; clique num espaço vazio para marcar algo
 na mão; clique num bloco para editar. No celular a grade rola para o lado.
 
+### O card entra na agenda sozinho
+
+Criou um card na aba Atividades, ele já cai na grade — no primeiro horário livre a partir de
+agora, dentro da janela de trabalho. Aparece tanto no calendário do projeto quanto no de
+**Todos os quadros**. Um card recorrente entra nos próximos 7 dias; para as semanas seguintes,
+use **Montar a semana**.
+
+Depois disso o card e o bloco andam juntos: mudar título, prioridade, duração, meta ou
+frequência atualiza o que está na grade; concluir o card risca o bloco; excluir o card tira os
+blocos que ainda não aconteceram (os passados ficam como registro).
+
+Se você marcar **dia e hora dentro do card**, ele vira uma âncora (borda tracejada) e o bloco
+automático sai de cena, para a mesma tarefa não aparecer duas vezes.
+
+### Nada entra em cima de nada
+
+Horário ocupado é horário bloqueado, em todos os caminhos: arrastar, criar na mão, editar um
+bloco ou marcar a hora dentro do card. Quando há choque, a ação é recusada e o app diz o que
+já está ali — `Já tem "Gravar 3 reels" das 08:00 às 09:00`. Ao criar um bloco clicando num
+espaço vazio, a duração sugerida já é a maior que cabe até o próximo compromisso.
+
+Duas exceções, de propósito: o que está **concluído** libera o horário, e blocos que já
+existiam antes dessa regra continuam aparecendo lado a lado.
+
 ### O planejador
 
-O botão **Montar a semana** preenche a grade a partir dos cards. Não é um modelo de
+O botão **Montar a semana** preenche a grade a partir dos cards — é o que completa uma semana
+inteira de uma vez, inclusive as futuras. Não é um modelo de
 linguagem: é um algoritmo que roda no navegador, sem API e sem custo — por isso é instantâneo,
 funciona offline e sempre explica o que fez.
 
